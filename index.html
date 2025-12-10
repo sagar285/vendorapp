@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>6 Digit Permutations Table</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 800px;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+      position: sticky;
+      top: 0;
+    }
+    tbody tr:nth-child(odd) {
+      background-color: #fafafa;
+    }
+    .container {
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Permutations of [1, 2, 3, 4, 5, 6,7,8,9]</h1>
+  <p>Total permutations: <strong id="count">0</strong></p>
+
+  <div class="container">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Permutation</th>
+        </tr>
+      </thead>
+      <tbody id="perm-table-body">
+        <!-- Rows will be added by JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Backtracking se permutations generate karne ka function
+    function generatePermutations(arr) {
+      const result = [];
+
+      function backtrack(startIndex) {
+        if (startIndex === arr.length) {
+          // Har permutation ka copy push karo
+          result.push(arr.slice());
+          return;
+        }
+
+        for (let i = startIndex; i < arr.length; i++) {
+          // Swap
+          [arr[startIndex], arr[i]] = [arr[i], arr[startIndex]];
+          backtrack(startIndex + 1);
+          // Backtrack (swap back)
+          [arr[startIndex], arr[i]] = [arr[i], arr[startIndex]];
+        }
+      }
+
+      backtrack(0);
+      return result;
+    }
+
+    // Main logic: table me print karna
+    const digits = [1, 2, 3, 4, 5, 6,7,8,9];
+    const permutations = generatePermutations(digits);
+    const tbody = document.getElementById('perm-table-body');
+    const countSpan = document.getElementById('count');
+    countSpan.textContent = permutations.length; // should be 720
+
+    // Saari permutations ko table me daalo
+    permutations.forEach((perm, index) => {
+      const tr = document.createElement('tr');
+
+      const indexTd = document.createElement('td');
+      indexTd.textContent = index + 1;
+
+      const permTd = document.createElement('td');
+      // Example format: 1 2 3 4 5 6
+      permTd.textContent = perm.join(' ');
+
+      tr.appendChild(indexTd);
+      tr.appendChild(permTd);
+      tbody.appendChild(tr);
+    });
+
+    // Console me bhi dekhna ho to:
+    console.log('Total permutations:', permutations.length);
+    console.log(permutations);
+  </script>
+</body>
+</html>

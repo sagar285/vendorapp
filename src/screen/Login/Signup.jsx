@@ -1,25 +1,75 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
-import React, { useState } from 'react'
-import {apiPost} from "../../Api/Api"
+import { 
+  StyleSheet, Text, View, TextInput, TouchableOpacity,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
+  BackHandler, Alert
+} from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { apiPost } from "../../Api/Api"
+import NavigationStrings from '../../Navigations/NavigationStrings'
+import { useNavigation } from '@react-navigation/native'
+
 const Signup = () => {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [errormsg, seterrormsg] = useState(null)
+  const [loading, setLoading] = useState(false)
 
+  const navigation = useNavigation()
 
-  const handleSignup =async () => {
-    // Add your signup logic here
-   try {
-    const url ='/auth/register'
-    const payload = {
-    name:fullName,
-    email:email
-}
-    const result =await apiPost(url,payload)
-    console.log(result,"api response result")
-   } catch (error) {
-    console.log(error,"vcvkjxckvcjkvc")
-   }
+  // ===========================
+  // 🚀 BACK HANDLER (Exit App)
+  // ===========================
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert(
+        "Exit App",
+        "Are you sure you want to exit?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "YES", onPress: () => BackHandler.exitApp() }
+        ]
+      );
+      return true; // prevent default navigation behavior
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // cleanup
+  }, []);
+
+  // ===========================
+  // 🚀 SIGNUP FUNCTION
+  // ===========================
+  const handleSignup = async () => {
+    if (!fullName || !email) {
+      seterrormsg("All fields are required")
+      return
+    }
+    try {
+      setLoading(true)
+      seterrormsg(null)
+
+      const url = '/auth/register'
+      const payload = { name: fullName, email: email }
+
+      const result = await apiPost(url, payload)
+      console.log(result, "api response result")
+
+      if (result.message === "OTP sent to your email") {
+        navigation.navigate(NavigationStrings.OTP, { email })
+      }
+    } catch (error) {
+      console.log(error, "Signup Error")
+      seterrormsg(error?.message || "Something went wrong")
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const isButtonDisabled = !fullName || !email || loading
 
   return (
     <KeyboardAvoidingView 
@@ -61,37 +111,29 @@ const Signup = () => {
             />
           </View>
 
-          {/* <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Create a password"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+          {errormsg && (
+            <Text style={styles.errorText}>{errormsg}</Text>
+          )}
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm your password"
-              placeholderTextColor="#999"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
-          </View> */}
-
-          <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-            <Text style={styles.signupButtonText}>SEND OTP</Text>
+          {/* BUTTON */}
+          <TouchableOpacity 
+            style={[
+              styles.signupButton, 
+              isButtonDisabled && { backgroundColor: '#9cc8ff' }
+            ]} 
+            onPress={handleSignup}
+            disabled={isButtonDisabled}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.signupButtonText}>SEND OTP</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate(NavigationStrings.Login)}>
               <Text style={styles.loginText}>Log In</Text>
             </TouchableOpacity>
           </View>
@@ -156,10 +198,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     shadowColor: '#007AFF',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
@@ -168,6 +207,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginBottom: 10,
+    marginTop: -10,
   },
   footerContainer: {
     flexDirection: 'row',

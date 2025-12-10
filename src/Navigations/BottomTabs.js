@@ -1,56 +1,33 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Cart, wishlist } from '../Screen';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import NavigationString from './NavigationStrings';
-import { Screen } from 'react-native-screens';
-
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import NavigationString from "./NavigationStrings";
+import * as Screen from "../screen";
 
 const Tab = createBottomTabNavigator();
 
-const BottomTabs = () => {
+export default function BottomTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        headerShown: false, 
-        tabBarActiveTintColor: '#007bff',
-        tabBarInactiveTintColor: '#777',
+        headerShown: false,
       }}
     >
       <Tab.Screen
-        name="HomeTab" 
-        component={HomeStack} 
-        options={{
-          tabBarLabel: '', 
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" color={color} size={size} />
-          ),
-        }}
+        name={NavigationString.Shops}
+        component={Screen.Shops}
       />
       <Tab.Screen
-        name="Cart"
-        component={CartStack} 
-         options={{
-         tabBarLabel: '',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="shopping-cart" color={color} size={size} />
-          ),
-        }}
+        name={NavigationString.ViewItems}
+        component={Screen.ViewItems}
       />
       <Tab.Screen
-        name={NavigationString.wishlist}
-        component={wishlist} 
-         options={{
-         tabBarLabel: '',
-
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="favorite" color={color} size={size} />
-          ),
-        }}
+        name={NavigationString.addYourshop}
+        component={Screen.AddShop}
       />
-      
+      <Tab.Screen
+        name={NavigationString.addMenu}
+        component={Screen.AddMenu}
+      />
     </Tab.Navigator>
   );
-};
-
-export default BottomTabs;
+}

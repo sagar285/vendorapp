@@ -1,91 +1,88 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-export const BACKEND_URL ="https://dth-backend-8ozy.onrender.com/api"
-const baseUrl = "https://dth-backend-8ozy.onrender.com/api"
+export const BASE_URL = "http://88.222.241.105:9001/api";
+export const BACKEND_URL = "http://88.222.241.105:9001";
+const baseUrl = BASE_URL;
 
+// ------------------------------------
+// GET TOKEN HEADER
+// ------------------------------------
+export async function getHeaders(extraHeaders = {}, isMultipart = false) {
+  let token = await AsyncStorage.getItem('token');
 
-export async function getHeaders() {
-	let token = await AsyncStorage.getItem('user_token');
-	console.log(token,"token")
-	if (token) {
-		// userData = JSON.parse(userData);
-		//console.log(userData.accessToken, 'header')
-		return {
-			authorization: `bearer ${token}`,
-		};
-	}
-	return {};
+  let headers = {
+    Authorization: token ? `Bearer ${token}` : "",
+    ...extraHeaders,
+  };
+
+  if (isMultipart) {
+    headers["Content-Type"] = "multipart/form-data";
+  } else {
+    headers["Content-Type"] = "application/json";
+  }
+
+  return headers;
 }
 
+// ------------------------------------
+// GENERIC API REQUEST
+// ------------------------------------
+export async function apiReq(endpoint, data, method, extraHeaders, isMultipart = false) {
+  try {
+    const headers = await getHeaders(extraHeaders, isMultipart);
 
-export async function apiReq(
-	endPoint,
-	data,
-	method,
-	headers,
-	requestOptions = {}
-) {
+    const url = `${baseUrl}${endpoint}`;
+    console.log("API URL:", url);
+    console.log("HEADERS:", headers);
 
-	return new Promise(async (res, rej) => {
-		const getTokenHeader = await getHeaders();
+    let response;
 
-		headers = {
-			...getTokenHeader,
-			...headers
-		};
+    if (method === "get") {
+      response = await axios.get(url, { headers, params: data });
+    } 
+    else if (method === "delete") {
+      response = await axios.delete(url, { headers, data });
+    } 
+    else {
+      // POST / PUT supports JSON + MULTIPART
+      response = await axios({
+        url,
+        method,
+        data,
+        headers
+      });
+    }
 
-		if (method === 'get' || method === 'delete') {
-			data = {
-				...requestOptions,
-				...data,
-				headers
-			};
-		}
-		console.log("endPointendPoint",`${baseUrl}${endPoint}`)
+    console.log(response)
+    return response.data;
 
-		axios[method](`${baseUrl}${endPoint}`, data, { headers })
-			.then(result => {
-				console.log("api result response",result)
-				const { data } = result;
+  } catch (error) {
+    console.log("API ERROR:", error);
 
-				if (data.status === false) {
-					return rej(data);
-				}
- 
-				return res(data);
-			})
-			.catch(error => {
-				console.log(error,"error in api call")
-				console.log(error && error.response, 'the error respne')
-				if (error && error.response && error.response.status === 401) {
-							//logout user
-							alert("user not valid")
-				}
-				if (error && error.response && error.response.data) {
-					if (!error.response.data) {
-						return rej({ ...error.response.data})
-					}
-					return rej(error.response.data)
-				} else {
-					return rej({ message: "Network Error", message: "Network Error" });
-				}
-			});
-	});
+    if (error.response) {
+      return Promise.reject(error.response.data);
+    } else {
+      return Promise.reject({ message: "Network Error" });
+    }
+  }
 }
 
-export function apiPost(endPoint, data, headers = {}) {
-	return apiReq(endPoint, data, 'post', headers);
+// ------------------------------------
+// API METHODS
+// ------------------------------------
+export function apiPost(endpoint, data, extraHeaders = {}, isMultipart = false) {
+  return apiReq(endpoint, data, "post", extraHeaders, isMultipart);
 }
 
-export function apiDelete(endPoint, data, headers = {}) {
-	return apiReq(endPoint, data, 'delete', headers);
+export function apiGet(endpoint, data, extraHeaders = {}) {
+  return apiReq(endpoint, data, "get", extraHeaders, false);
 }
 
-export function apiGet(endPoint, data, headers = {}, requestOptions) {
-	return apiReq(endPoint, data, 'get', headers, requestOptions);
+export function apiPut(endpoint, data, extraHeaders = {}, isMultipart = false) {
+  return apiReq(endpoint, data, "put", extraHeaders, isMultipart);
 }
 
-export function apiPut(endPoint, data, headers = {}) {
-	return apiReq(endPoint, data, 'put', headers);
+export function apiDelete(endpoint, data, extraHeaders = {}) {
+  return apiReq(endpoint, data, "delete", extraHeaders, false);
 }

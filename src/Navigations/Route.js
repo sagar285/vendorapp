@@ -11,7 +11,7 @@ const Route = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator 
-          initialRouteName={NavigationString.Signup}
+          initialRouteName={NavigationString.Login}
 
             screenOptions={{
                 gestureEnabled:true,
