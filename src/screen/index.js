@@ -9,3 +9,11 @@ export {default as ViewShop } from "./Home/ViewShop"
 export {default as ShopMenuManager } from "./Home/ShopMenuManager"
 export {default as ViewItems } from "./Home/ViewItems"
 export {default as Testing } from "../Testing/Testing"
+
+// DNT SCREENS 
+
+export {default as DNT_SIGNUP} from "../DNT_DESIGN/Signup";
+export {default as DNT_LOGIN} from "../DNT_DESIGN/Login";
+export {default as FIRST_PAGE} from "../DNT_DESIGN/FirstPage";
+export {default as DNT_OTP} from "../DNT_DESIGN/OTP";
+export {default as DNT_PASSWORD} from "../DNT_DESIGN/Password";

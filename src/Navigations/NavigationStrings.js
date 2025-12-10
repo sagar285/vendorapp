@@ -12,4 +12,13 @@ export default {
       OTP : "OTP",
       SetPassword:"setPassword",
       Testing:"Testing",
+
+
+      // DNT DESIGN SCREENS 
+
+      DNT_SIGNUP : "signup",
+      DNT_LOGIN : "login",
+      DNT_OTP : "OTP",
+      FIRST_PAGE :"firstpage",
+      DNT_PASSWORD:"password"
 }

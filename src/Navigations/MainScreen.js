@@ -5,13 +5,18 @@ export default function (Stack) {
   return (
     <>
       <Stack.Screen
-        name={NavigationString.Signup}
-        component={Screen.Signup}
+        name={NavigationString.DNT_SIGNUP}
+        component={Screen.DNT_SIGNUP}
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name={NavigationString.Login}
-        component={Screen.Login}
+        name={NavigationString.FIRST_PAGE}
+        component={Screen.FIRST_PAGE}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name={NavigationString.DNT_LOGIN}
+        component={Screen.DNT_LOGIN}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -50,14 +55,14 @@ export default function (Stack) {
       />
 
       <Stack.Screen
-        name={NavigationString.OTP}
-        component={Screen.OTP}
+        name={NavigationString.DNT_OTP}
+        component={Screen.DNT_OTP}
         options={{ headerShown: false }}
       />
 
       <Stack.Screen
-        name={NavigationString.SetPassword}
-        component={Screen.SetPassword}
+        name={NavigationString.DNT_PASSWORD}
+        component={Screen.DNT_PASSWORD}
         options={{ headerShown: false }}
       />
       <Stack.Screen
