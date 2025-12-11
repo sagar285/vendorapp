@@ -57,6 +57,11 @@ const styles = StyleSheet.create({
   borderText: {
     color: COLORS.orange,
   },
+  text:{
+    color: COLORS.white,
+    fontFamily:FONTS.InterMedium,
+    fontSize:wp(4)
+  }
   
 });
 

@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.InterMedium,
     fontSize: wp(3.6),
     color: COLORS.BlackText,
-    marginBottom: hp(0.8),
+    marginBottom: hp(1.2),
   },
 
   inputWrapper: {

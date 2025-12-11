@@ -36,8 +36,7 @@ const FirstPage = () => {
           />
 
           <Text style={styles.descriptionText}>
-            Lorem ipsum dolor sit amet consectetur {"\n"}
-            adipisicing elit. Ad quaerat pariatur
+          Where local shops power everyday living.{"\n"}You serve the city; we take it Ghar Tak.
           </Text>
         </View>
 
@@ -94,7 +93,8 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: wp(4),
     lineHeight: hp(2.5),
-    fontFamily:FONTS.InterMedium
+    fontFamily:FONTS.InterMedium,
+    textAlign:"center"
   },
   BottomRowButton: {
     flexDirection: "row",

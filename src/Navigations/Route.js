@@ -11,7 +11,7 @@ const Route = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator 
-          initialRouteName={NavigationString.FIRST_PAGE}
+          initialRouteName={NavigationString.BottomTab}
 
             screenOptions={{
                 gestureEnabled:true,

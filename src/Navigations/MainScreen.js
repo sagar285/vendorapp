@@ -1,6 +1,6 @@
 import NavigationString from './NavigationStrings';
 import * as Screen from '../screen';
-// import BottomTabs from "./BottomTabs";
+import BottomTabs from "./BottomTabs";
 export default function (Stack) {
   return (
     <>
@@ -65,6 +65,24 @@ export default function (Stack) {
         component={Screen.DNT_PASSWORD}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name={NavigationString.DNT_VENDORREGISTER}
+        component={Screen.VendorRegister}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name={NavigationString.DNT_VerifyingDetails}
+        component={Screen.DNT_VerifyingDetails}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+      name={NavigationString.BottomTab} 
+      component={BottomTabs} 
+        options={{ headerShown: false }}
+
+      />
+
+
       <Stack.Screen
         name={NavigationString.Testing}
         component={Screen.Testing}

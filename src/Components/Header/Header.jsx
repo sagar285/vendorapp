@@ -50,7 +50,7 @@ export default Header;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: wp(5),
+  
     paddingVertical: hp(1.5),
     flexDirection: "row",
     justifyContent: "space-between",

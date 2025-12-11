@@ -14,8 +14,11 @@ import {
   import { COLORS } from "../Theme/Colors";
   import { wp, hp } from "../Theme/Dimensions";
   import { FONTS } from "../Theme/FontFamily";
-  
+import { useNavigation } from "@react-navigation/native";
+import NavigationStrings from "../Navigations/NavigationStrings";
+
   const Password = () => {
+     const navigation =useNavigation()
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
   
@@ -31,6 +34,10 @@ import {
       { label: "At least one symbol & number", valid: rule2 },
       { label: "Minimum one uppercase letter", valid: rule3 },
     ];
+
+    const HandleSetPassword = () => {
+       navigation.navigate(NavigationStrings.DNT_VENDORREGISTER)
+    }
   
     return (
       <KeyboardAvoidingView
@@ -119,7 +126,7 @@ import {
             <FullwidthButton
               title="Continue"
               disabled={!allValid}
-              onPress={() => console.log("Password Saved")}
+              onPress={HandleSetPassword}
             />
           </View>
         </View>
