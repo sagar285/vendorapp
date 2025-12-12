@@ -1,187 +1,120 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-
-const SuccessScreen = () => {
-  const checkmarkScale = useRef(new Animated.Value(0)).current;
-  const sparkleAnimations = useRef(
-    Array.from({ length: 8 }, () => new Animated.Value(0))
-  ).current;
-  const circlePulse = useRef(new Animated.Value(1)).current;
+import { StyleSheet, Text, View, Animated } from 'react-native'
+import React, { useRef, useEffect } from 'react'
+import LottieView from 'lottie-react-native';
+import { COLORS } from "../Theme/Colors";
+import { wp, hp } from "../Theme/Dimensions";
+import { FONTS } from '../Theme/FontFamily';
+import { useNavigation } from '@react-navigation/native';
+import NavigationStrings from '../Navigations/NavigationStrings';
+const SuccessFull = () => {
+  const animationRef = useRef(null);
+  const navigation = useNavigation()
+  const fadeAnim = useRef(new Animated.Value(0)).current;  
+  const translateY = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Checkmark animation - scale in with bounce
-    Animated.sequence([
-      Animated.delay(300),
-      Animated.spring(checkmarkScale, {
-        toValue: 1,
-        friction: 4,
-        tension: 40,
-        useNativeDriver: false,
-      }),
-    ]).start();
+    // Lottie animation start
+    animationRef.current?.play();
 
-    // Sparkle animations - staggered
-    sparkleAnimations.forEach((sparkleAnim, index) => {
-      Animated.sequence([
-        Animated.delay(600 + index * 150),
-        Animated.timing(sparkleAnim, {
-          toValue: 1,
-          duration: 500,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: false,
-        }),
-      ]).start();
-    });
-
-    // Circle pulse animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(circlePulse, {
-          toValue: 1.1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.sine),
-          useNativeDriver: false,
-        }),
-        Animated.timing(circlePulse, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.sine),
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
-  }, [checkmarkScale, sparkleAnimations, circlePulse]);
-
-  const sparklePositions = [
-    { top: '15%', left: '25%' },
-    { top: '20%', right: '20%' },
-    { bottom: '20%', right: '15%' },
-    { bottom: '25%', left: '20%' },
-    { top: '10%', left: '50%' },
-    { top: '12%', right: '35%' },
-    { bottom: '10%', right: '48%' },
-    { bottom: '12%', left: '48%' },
-  ];
+    // Stagger the animations for better effect
+    setTimeout(() => {
+  Animated.parallel([
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }),
+    Animated.spring(translateY, {
+      toValue: 0,
+      tension: 50,
+      friction: 7,
+      useNativeDriver: true,
+    }),
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 50,
+      friction: 7,
+      useNativeDriver: true,
+    }),
+  ]).start();
+  navigation.navigate(NavigationStrings.DNT_Home)
+}, 800);
+ // Delay to sync with lottie animation
+  }, []);
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        {/* Sparkles */}
-        {sparklePositions.map((pos, index) => (
-          <Animated.Text
-            key={index}
-            style={[
-              styles.sparkle,
-              {
-                opacity: sparkleAnimations[index],
-                transform: [
-                  {
-                    scale: sparkleAnimations[index].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.5, 1],
-                    }),
-                  },
-                ],
-              },
-              pos,
-            ]}
-          >
-            ✦
-          </Animated.Text>
-        ))}
-
-        {/* Circle Container */}
-        <Animated.View
-          style={[
-            styles.circleContainer,
-            {
-              transform: [{ scale: circlePulse }],
-            },
-          ]}
-        >
-          {/* Outer Circle (Light Background) */}
-          <View style={styles.circleBg} />
-
-          {/* Inner Circle (Green) */}
-          <View style={styles.circleInner}>
-            {/* Checkmark */}
-            <Animated.Text
-              style={[
-                styles.checkmark,
-                {
-                  transform: [{ scale: checkmarkScale }],
-                },
-              ]}
-            >
-              ✓
-            </Animated.Text>
-          </View>
-        </Animated.View>
-
-        {/* Text */}
-        <Text style={styles.heading}>Shop Created Successfully</Text>
+      <View style={styles.lottieContainer}>
+        <LottieView
+          ref={animationRef}
+          source={require("../assets/gt_lottie animation (1).json")}
+          style={styles.lottie}
+          autoPlay
+          loop={false}
+          resizeMode="cover"
+        />
       </View>
+
+      <Animated.View
+        style={[
+          styles.textContainer,
+          { 
+            opacity: fadeAnim, 
+            transform: [
+              { translateY },
+              { scale: scaleAnim }
+            ] 
+          }
+        ]}
+      >
+        <Text style={styles.successText}>
+          Shop Created Successfully
+        </Text>
+        <Text style={styles.subText}>
+          Your shop is now live and ready!
+        </Text>
+      </Animated.View>
     </View>
   );
 };
 
+export default SuccessFull;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
-    backgroundColor: '#f5f7fa',
+    alignItems: 'center',
+    paddingHorizontal: wp(10),
   },
-  content: {
-    alignItems: 'center',
+  lottieContainer: {
+    width: wp(60),
+    height: wp(60),
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lottie: {
     width: '100%',
-    paddingHorizontal: 20,
+    height: '100%',
   },
-  circleContainer: {
-    width: 200,
-    height: 200,
+  textContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 40,
+    marginTop: hp(2),
   },
-  circleBg: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-  },
-  circleInner: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  checkmark: {
-    fontSize: 80,
-    color: '#fff',
-    fontWeight: '700',
-  },
-  sparkle: {
-    position: 'absolute',
-    fontSize: 20,
-    color: '#4CAF50',
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#333',
+  successText: {
+    fontSize: wp(5.5),
+    color: COLORS.BlackText || "#000",
     textAlign: 'center',
-    letterSpacing: 0.3,
+    fontFamily: FONTS.InterSemiBold,
+    marginBottom: hp(1),
+  },
+  subText: {
+    fontSize: wp(3.5),
+    fontWeight: '400',
+    color: COLORS.gray || "#666",
+    textAlign: 'center',
+    fontFamily: FONTS.InterRegular,
   },
 });
-
-export default SuccessScreen;

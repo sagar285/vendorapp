@@ -34,6 +34,11 @@ const HomeStack = () => {
         component={Screen.DNT_Home}
         options={{ headerShown: false }}
       /> 
+        <Stack.Screen
+        name={NavigationString.DNT_ViewShop}
+        component={Screen.DNT_ViewShop}
+        options={{ headerShown: false }}
+      /> 
         </Stack.Navigator>
     );
 };

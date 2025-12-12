@@ -1,4 +1,4 @@
-import { DNT_AddShop, DNT_AddYourShop, DNT_AddYourShopDetails, DNT_Home, DNT_SuccesFull, DNT_VerifyingDetails } from "../screen";
+import { DNT_AddShop, DNT_AddYourShop, DNT_AddYourShopDetails, DNT_Home, DNT_SuccesFull, DNT_VerifyingDetails, DNT_ViewShop } from "../screen";
 import BottomTab from "../Navigations/BottomTabs"
 import { Suspense } from "react";
 
@@ -30,5 +30,6 @@ export default {
       DNT_AddYourShop:"AddYourShop",
       DNT_AddYourShopDetails:"AddYourShopDetails",
       DNT_SuccesFull:"SuccessFull",
-      DNT_Home:"Home"
+      DNT_Home:"Home",
+      DNT_ViewShop:"ViewShop"
 }

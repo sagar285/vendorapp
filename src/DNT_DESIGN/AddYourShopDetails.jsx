@@ -98,7 +98,7 @@ const AddYourShopDetails = ({ navigation }) => {
       <View style={styles.footer}>
         <FullwidthButton 
             title="Submit" 
-            onPress={() => {navigation.navigate(NavigationStrings.DNT_Home)}}
+            onPress={() => {navigation.navigate(NavigationStrings.DNT_SuccesFull)}}
             style={{ backgroundColor: '#C4C4C4' }} 
         />
       </View>

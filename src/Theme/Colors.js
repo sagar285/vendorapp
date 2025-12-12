@@ -9,7 +9,8 @@ export const COLORS = {
    LocationBuleColor10:"#4778FF1A",
    grayText:"#4E4E4E99",
    orange10: "#FF4B2F1A",
-   Green10:"#34C7591A"
+   Green10:"#34C7591A",
+   Blue10:"#4778FF1A"
 }
 // space {"\n"}
 // Opacity	Hex

@@ -19,7 +19,7 @@ const SuccessFull = () => {
       <View style={styles.lottieContainer}>
         <LottieView
           ref={animationRef}
-          source={require("../assets/animations/Success.json")} // Apni downloaded .json file yahan lagayein
+          source={require("../assets/gt_lottie animation.json")} // Apni downloaded .json file yahan lagayein
           style={styles.lottie}
           autoPlay={true}
           loop={false} // GPay ki tarah ek baar play hoke ruk jayega

@@ -24,3 +24,4 @@ export {default as DNT_AddYourShop} from "../DNT_DESIGN/AddYourShop";
 export {default as DNT_AddYourShopDetails} from "../DNT_DESIGN/AddYourShopDetails";
 export {default as DNT_SuccesFull} from "../DNT_DESIGN/SuccessFull";
 export {default as DNT_Home} from "../DNT_DESIGN/Home";
+export {default as DNT_ViewShop} from "../DNT_DESIGN/ViewShop";
