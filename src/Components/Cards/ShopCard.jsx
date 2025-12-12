@@ -13,7 +13,7 @@ const ShopCard = ({ shop, onViewShop, onShareQR }) => {
       <ImageScrollView images={shop.images} />
 
       <View style={styles.infoContainer}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1,flexDirection:"row",justifyContent:"space-between" }}>
           <Text style={styles.shopName}>{shop.name}</Text>
           
           <View style={styles.detailsRow}>
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingTop: hp(2),
     paddingBottom: hp(1.5),
+
   },
   shopName: {
     fontSize: wp(3.6),
@@ -80,6 +81,7 @@ const styles = StyleSheet.create({
     color: COLORS.BlackText,
     fontFamily: FONTS.InterSemiBold,
     marginBottom: hp(1),
+
   },
   detailsRow: {
     flexDirection: 'row',
