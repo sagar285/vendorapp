@@ -39,6 +39,21 @@ const HomeStack = () => {
         component={Screen.DNT_ViewShop}
         options={{ headerShown: false }}
       /> 
+      <Stack.Screen
+         name={NavigationString.DNT_AddNewCategory}
+         component={Screen.DNT_AddNewCategory}
+         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+         name={NavigationString.DNT_CategoryMenu}
+         component={Screen.DNT_CategoryMenu}
+         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+         name={NavigationString.DNT_Categoris}
+         component={Screen.DNT_Categoris}
+         options={{ headerShown: false }}
+      />
         </Stack.Navigator>
     );
 };

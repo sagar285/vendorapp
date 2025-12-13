@@ -25,3 +25,9 @@ export {default as DNT_AddYourShopDetails} from "../DNT_DESIGN/AddYourShopDetail
 export {default as DNT_SuccesFull} from "../DNT_DESIGN/SuccessFull";
 export {default as DNT_Home} from "../DNT_DESIGN/Home";
 export {default as DNT_ViewShop} from "../DNT_DESIGN/ViewShop";
+export {default as DNT_AddNewCategory} from "../DNT_DESIGN/AddNewCategory";
+export {default as DNT_CategoryMenu} from "../DNT_DESIGN/CategoryMenu";
+export {default as DNT_Categoris} from "../DNT_DESIGN/Categories";
+export {default as DNT_UserProfile} from "../DNT_DESIGN/UserProfile";
+export {default as DNT_ResetPassword} from "../DNT_DESIGN/ResetPassword";
+export {default as DNT_Order} from "../DNT_DESIGN/Order";

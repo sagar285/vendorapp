@@ -165,7 +165,7 @@ const ViewShop = ({ navigation, route }) => {
       <View style={styles.footer}>
         <FullwidthButton 
           title="Manage Shop" 
-          onPress={() => {navigation.navigate(NavigationStrings.DNT_SuccesFull)}}
+          onPress={() => {navigation.navigate(NavigationStrings.DNT_AddNewCategory)}}
         />
       </View>
 

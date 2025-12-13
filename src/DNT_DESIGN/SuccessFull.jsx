@@ -6,41 +6,44 @@ import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from '../Theme/FontFamily';
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
+
 const SuccessFull = () => {
   const animationRef = useRef(null);
   const navigation = useNavigation()
-  const fadeAnim = useRef(new Animated.Value(0)).current;  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Lottie animation start
     animationRef.current?.play();
 
-    // Stagger the animations for better effect
     setTimeout(() => {
-  Animated.parallel([
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }),
-    Animated.spring(translateY, {
-      toValue: 0,
-      tension: 50,
-      friction: 7,
-      useNativeDriver: true,
-    }),
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 50,
-      friction: 7,
-      useNativeDriver: true,
-    }),
-  ]).start();
-  navigation.navigate(NavigationStrings.DNT_Home)
-}, 800);
- // Delay to sync with lottie animation
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(translateY, {
+          toValue: 0,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 800);
+
+    const timer = setTimeout(() => {
+      navigation.navigate(NavigationStrings.DNT_Home)
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -48,32 +51,26 @@ const SuccessFull = () => {
       <View style={styles.lottieContainer}>
         <LottieView
           ref={animationRef}
-          source={require("../assets/gt_lottie animation (1).json")}
+          source={require('../assets/gt_lottie animation (1).json')}
           style={styles.lottie}
-          autoPlay
           loop={false}
-          resizeMode="cover"
         />
       </View>
 
       <Animated.View
         style={[
           styles.textContainer,
-          { 
-            opacity: fadeAnim, 
+          {
+            opacity: fadeAnim,
             transform: [
-              { translateY },
+              { translateY: translateY },
               { scale: scaleAnim }
-            ] 
+            ]
           }
         ]}
       >
-        <Text style={styles.successText}>
-          Shop Created Successfully
-        </Text>
-        <Text style={styles.subText}>
-          Your shop is now live and ready!
-        </Text>
+        <Text style={styles.successText}>Shop Created Successfully</Text>
+        {/* <Text style={styles.subText}>Your shop is now live and ready!</Text> */}
       </Animated.View>
     </View>
   );
@@ -104,7 +101,7 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
   },
   successText: {
-    fontSize: wp(5.5),
+    fontSize: wp(4.5),
     color: COLORS.BlackText || "#000",
     textAlign: 'center',
     fontFamily: FONTS.InterSemiBold,

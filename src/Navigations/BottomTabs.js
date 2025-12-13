@@ -6,6 +6,9 @@ import * as Screen from "../screen";
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import HomeStack from "./HomeStack"
+import UserProfile from "../DNT_DESIGN/UserProfile"
+import ProfileStack from "../Navigations/ProfileStack"
+import Order from "../DNT_DESIGN/Order"
 const Tab = createBottomTabNavigator();
 
 const TabItem = ({ focused, label, icon, isProfile = false }) => {
@@ -58,8 +61,8 @@ export default function BottomTabs() {
         }}
       />
       <Tab.Screen
-        name={NavigationString.ViewItems}
-        component={Screen.ViewItems}
+        name={NavigationString.DNT_Order}
+        component={Screen.DNT_Order}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabItem
@@ -84,8 +87,8 @@ export default function BottomTabs() {
         }}
       />
       <Tab.Screen
-        name={NavigationString.addMenu}
-        component={Screen.AddMenu}
+        name="Profile"
+        component={ProfileStack}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabItem

@@ -1,4 +1,4 @@
-import { DNT_AddShop, DNT_AddYourShop, DNT_AddYourShopDetails, DNT_Home, DNT_SuccesFull, DNT_VerifyingDetails, DNT_ViewShop } from "../screen";
+import { DNT_AddNewCategory, DNT_AddShop, DNT_AddYourShop, DNT_AddYourShopDetails, DNT_Categoris, DNT_CategoryMenu, DNT_Home, DNT_Order, DNT_ResetPassword, DNT_SuccesFull, DNT_UserProfile, DNT_VerifyingDetails, DNT_ViewShop } from "../screen";
 import BottomTab from "../Navigations/BottomTabs"
 import { Suspense } from "react";
 
@@ -31,5 +31,12 @@ export default {
       DNT_AddYourShopDetails:"AddYourShopDetails",
       DNT_SuccesFull:"SuccessFull",
       DNT_Home:"Home",
-      DNT_ViewShop:"ViewShop"
+      DNT_ViewShop:"ViewShop",
+      DNT_AddNewCategory:"AddNewCategory",
+      DNT_CategoryMenu:"CategoryMenu",
+      DNT_Categoris:"Categories",
+      DNT_UserProfile:"UserProfile",
+      DNT_ResetPassword:"ResetPassword",
+      DNT_Order:"Order",
+
 }
