@@ -1,64 +1,105 @@
-import { StyleSheet, Text, View, KeyboardAvoidingView, Platform } from "react-native";
-import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  BackHandler,
+  Alert,
+} from "react-native";
+import React, { useState, useCallback } from "react";
 import Header from "../Components/Header/Header";
 import Input from "../Components/Input";
 import FullWidthButton from "../Components/FullwidthButton";
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from "../Theme/FontFamily";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import NavigationStrings from "../Navigations/NavigationStrings";
+import { useAppContext } from "../Context/AppContext";
+import { apiPost } from "../Api/Api";
 
 const Signup = () => {
+  const navigation = useNavigation();
+  const { setActiveLoader } = useAppContext();
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const navigation =useNavigation()
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const [errors, setErrors] = useState({
-    fullName: "",
-    email: "",
-  });
+  useFocusEffect(
+    useCallback(() => {
+      setActiveLoader(0);
 
-  // ✅ Validation Function
-  const validateAndSubmit = () => {
-    navigation.navigate(NavigationStrings.DNT_OTP)
-    return;
-    let valid = true;
-    let newErrors = { fullName: "", email: "" };
+      const backAction = () => {
+        Alert.alert(
+          "Exit App",
+          "Are you sure you want to exit?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "YES", onPress: () => BackHandler.exitApp() },
+          ]
+        );
+        return true;
+      };
 
-    if (!fullName.trim()) {
-      newErrors.fullName = "Full name is required";
-      valid = false;
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    }, [])
+  );
+
+  const handleSignup = async () => {
+    if (!fullName.trim() || !email.trim()) {
+      setErrorMsg("All fields are required");
+      return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-      valid = false;
-    } else if (!emailRegex.test(email)) {
-      newErrors.email = "Enter a valid email address";
-      valid = false;
-    }
+    try {
+      setLoading(true);
+      setErrorMsg("");
 
-    setErrors(newErrors);
+      const payload = {
+        name: fullName,
+        email: email,
+      };
 
-    if (valid) {
-      console.log("Signup Data:", { fullName, email });
-      // 👇 API call / next step here
+      const result = await apiPost("/auth/register", payload);
+       console.log(result,"dekh aaya kua respnce eska")
+      if (result?.message === "OTP sent to your email") {
+        console.log(result?.message,"dek ye msg arha hai esme bhai")
+        navigation.navigate(NavigationStrings.DNT_OTP, { email });
+      }
+    } catch (error) {
+      if (error?.user?.isVerified == true ) {
+         navigation.navigate(NavigationStrings.DNT_PASSWORD)
+      }else{
+          navigation.navigate(NavigationStrings.DNT_LOGIN)
+      }
+      console.log(error,"error")
+      setErrorMsg(error?.message || "Something went wrong");
+      console.log("eror hia bhia esme ppppppp")
+    } finally {
+      setLoading(false);
     }
   };
+
+  const isDisabled = !fullName || !email || loading;
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      {/* ✅ HEADER WITH TOP SPACE */}
       <View style={styles.headerSpacing}>
         <Header />
       </View>
 
-      {/* ✅ TITLE & DESCRIPTION */}
       <View style={styles.titleContainer}>
         <Text style={styles.title}>Join GharTak</Text>
         <Text style={styles.description}>
@@ -66,7 +107,6 @@ const Signup = () => {
         </Text>
       </View>
 
-      {/* ✅ INPUT SECTION */}
       <View style={styles.formContainer}>
         <Input
           label="Full Name"
@@ -74,30 +114,41 @@ const Signup = () => {
           value={fullName}
           onChangeText={setFullName}
         />
-        {errors.fullName ? (
-          <Text style={styles.errorText}>{errors.fullName}</Text>
-        ) : null}
 
         <Input
           label="Email Address"
           placeholder="Enter your email"
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
         />
-        {errors.email ? (
-          <Text style={styles.errorText}>{errors.email}</Text>
-        ) : null}
 
-        {/* ✅ FULL WIDTH BUTTON AT BOTTOM */}
+        {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+
         <View style={styles.buttonSpacing}>
-          <FullWidthButton title="Continue" onPress={validateAndSubmit} />
+          <FullWidthButton
+            title={
+              loading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                "Continue"
+              )
+            }
+            disabled={isDisabled}
+            onPress={handleSignup}
+          />
         </View>
       </View>
 
-      {/* ✅ FOOTER LOGIN TEXT */}
       <Text style={styles.footerText}>
         Already have an account?
-        <Text style={styles.loginText}> Login</Text>
+        <Text
+          style={styles.loginText}
+          onPress={() => navigation.navigate(NavigationStrings.Login)}
+        >
+          {" "}
+          Login
+        </Text>
       </Text>
     </KeyboardAvoidingView>
   );
@@ -113,7 +164,7 @@ const styles = StyleSheet.create({
   },
 
   headerSpacing: {
-    marginTop: hp(2), // ✅ Header a little bit down
+    marginTop: hp(2),
   },
 
   titleContainer: {
@@ -137,7 +188,7 @@ const styles = StyleSheet.create({
 
   formContainer: {
     flex: 1,
-    justifyContent: "flex-end", // ✅ Inputs & button stay near bottom
+    justifyContent: "flex-end",
     paddingBottom: hp(3),
   },
 
@@ -145,9 +196,8 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.InterRegular,
     fontSize: wp(3.2),
     color: "red",
-    marginTop: hp(0.5),
-    marginBottom: hp(1),
-    marginLeft: wp(1),
+    textAlign: "center",
+    marginTop: hp(1),
   },
 
   buttonSpacing: {
@@ -167,4 +217,3 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.InterSemiBold,
   },
 });
-
