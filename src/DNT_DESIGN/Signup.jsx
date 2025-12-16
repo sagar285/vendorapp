@@ -68,11 +68,10 @@ const Signup = () => {
         name: fullName,
         email: email,
       };
-
       const result = await apiPost("/auth/register", payload);
        console.log(result,"dekh aaya kua respnce eska")
       if (result?.message === "OTP sent to your email") {
-        console.log(result?.message,"dek ye msg arha hai esme bhai")
+        console.log(result,"dek ye msg arha hai esme bhaiiiiiiiiiiiiiiii")
         navigation.navigate(NavigationStrings.DNT_OTP, { email });
       }
     } catch (error) {

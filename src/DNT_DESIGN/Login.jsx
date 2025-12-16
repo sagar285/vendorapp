@@ -24,7 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Login = () => {
   const navigation = useNavigation();
-  const { setActiveLoader } = useAppContext();
+  const { setActiveLoader,setUser } = useAppContext();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,14 +35,14 @@ const Login = () => {
     useCallback(() => {
       setActiveLoader(0);
 
-      const checkToken = async () => {
-        const token = await AsyncStorage.getItem("token");
-        if (token) {
-          navigation.replace(NavigationStrings.Shops);
-        }
-      };
+      // const checkToken = async () => {
+      //   const token = await AsyncStorage.getItem("token");
+      //   if (token) {
+      //     navigation.replace(NavigationStrings.DNT_VENDORREGISTER);
+      //   }
+      // };
 
-      checkToken();
+      // checkToken();
 
       const backAction = () => {
         Alert.alert(
@@ -90,7 +90,8 @@ const Login = () => {
           "userdata",
           JSON.stringify(result.user)
         );
-        navigation.replace(NavigationStrings.Shops);
+        setUser(result.user)
+        navigation.replace(NavigationStrings.DNT_VENDORREGISTER);
       } else {
         setErrorMsg(result?.message || "Login failed");
       }

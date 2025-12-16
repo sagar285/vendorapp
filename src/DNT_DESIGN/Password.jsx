@@ -60,7 +60,7 @@ const Password = () => {
 
       if (result?.token) {
         await AsyncStorage.setItem("token", result.token);
-        navigation.replace(NavigationStrings.Shops);
+        navigation.replace(NavigationStrings.DNT_VENDORREGISTER);
       } else {
         setErrorMsg("Failed to set password");
       }
@@ -128,6 +128,7 @@ const Password = () => {
             ))}
           </View>
 
+       <View style={styles.InputContainer} >
           <Input
             label="New Password"
             placeholder="Enter new password"
@@ -143,6 +144,7 @@ const Password = () => {
             value={confirm}
             onChangeText={setConfirm}
           />
+       </View>
 
           {confirm.length > 0 && password !== confirm && (
             <Text style={styles.errorText}>Passwords do not match</Text>
@@ -200,6 +202,9 @@ const styles = StyleSheet.create({
     fontSize: wp(3.6),
     color: COLORS.grayText,
     marginTop: hp(1),
+  },
+  InputContainer:{
+    marginTop:hp(20)
   },
 
   rulesContainer: {

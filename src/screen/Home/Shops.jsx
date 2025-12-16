@@ -58,10 +58,10 @@ const Shops = ({ navigation }) => {
     getShops();
   }, []);
 
-  const Logout = async () => {
-    await AsyncStorage.clear();
-    navigation.navigate(NavigationStrings.Login);
-  };
+  // const Logout = async () => {
+  //   await AsyncStorage.clear();
+  //   navigation.navigate(NavigationStrings.Login);
+  // };
 
   const submitVendorRequest = async () => {
     if (!name || !email || !address || !phone || !whatsapp || !numShops) {
@@ -106,12 +106,12 @@ const Shops = ({ navigation }) => {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: 20 }}>
       
-      {/* LOGOUT */}
+      {/* LOGOUT
       <View style={{ alignItems: 'flex-end', marginBottom: 10 }}>
         <TouchableOpacity style={styles.logoutBtn} onPress={Logout}>
           <Text style={styles.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {/* ---------------------------------------------------
            🟡 SHOW PENDING REQUEST UI

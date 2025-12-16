@@ -84,12 +84,16 @@ const OTP = () => {
       };
 
       const res = await apiPost("/auth/verify-otp", payload);
-
+    console.log(res,"otp ke bad k data hau ye dekhhhhhhhhhhhhhhhhh")
       if (res?.tempToken) {
         await AsyncStorage.setItem("token", res.tempToken);
         navigation.navigate(NavigationStrings.DNT_PASSWORD);
       }
     } catch (error) {
+      console.log(error,"dekh error aayi hai")
+      if (error?.message == "User already verified") {
+          navigation.navigate(NavigationStrings.DNT_PASSWORD)
+      }
       setErrorMsg(error?.message || "Invalid OTP");
     } finally {
       setLoading(false);
