@@ -143,9 +143,9 @@ const Signup = () => {
         Already have an account?
         <Text
           style={styles.loginText}
-          onPress={() => navigation.navigate(NavigationStrings.Login)}
+          onPress={() => navigation.navigate(NavigationStrings.DNT_LOGIN)}
         >
-          {" "}
+          
           Login
         </Text>
       </Text>

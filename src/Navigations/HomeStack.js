@@ -6,7 +6,7 @@ import * as Screen from "../screen";
 const Stack = createNativeStackNavigator()
 
 const HomeStack = () => {
-    // console.log(route,"wertyuidgfhgfhdhfjgfdgsfhcvbn")
+   
     return (
         <Stack.Navigator>
                   <Stack.Screen

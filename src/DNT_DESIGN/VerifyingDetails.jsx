@@ -31,7 +31,7 @@ const VerifyingDetails = () => {
       <View style={styles.footer}>
         <FullwidthButton 
             title="Back to login" 
-            onPress={Navigation.navigate(NavigationStrings.BottomTab)}
+            onPress={()=>Navigation.navigate(NavigationStrings.DNT_LOGIN)}
         />
       </View>
     </View>

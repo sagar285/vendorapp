@@ -90,11 +90,8 @@ const ShopMenuManager = ({ route }) => {
       const form = new FormData();
       form.append('shopId', shopId);
       form.append('name', newCatName);
-
       if (iconFile) form.append('icon', iconFile);
-
       await apiPost('/menu/category/add', form, {}, true);
-
       setAddCatModal(false);
       setNewCatName('');
       setIconFile(null);

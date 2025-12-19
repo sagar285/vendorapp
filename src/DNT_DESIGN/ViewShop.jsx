@@ -6,9 +6,11 @@ import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from '../Theme/FontFamily';
 import ImageScrollView from "../Components/ImageScrollerContainer/ImageScrollerWithoutDot";
 import NavigationStrings from '../Navigations/NavigationStrings';
+import { apiGet } from '../Api/Api';
 
 const ViewShop = ({ navigation, route }) => {
-  const shop = route?.params?.shop || {
+  const paramsshop = route.params.shop;
+  const shop =  {
     name: "Shop Name #1",
     location: "1234, very very long field of address,",
     location1: " then next line is also little length of,",
@@ -30,6 +32,69 @@ const ViewShop = ({ navigation, route }) => {
 
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showAllMenuItems, setShowAllMenuItems] = useState(false);
+  const [loadingQR, setLoadingQR] = useState(false);
+  const [qrImageBase64, setQrImageBase64] = useState(null);
+
+    const getImageUrl = (path) => {
+      const clean = path.replace(/\\/g, "/");
+      return `${BACKEND_URL.replace("/api", "")}/${clean}`;
+    };
+
+    const shareQRCode = async () => {
+      try {
+        if (!qrImageBase64) {
+          Alert.alert("Error", "Generate QR first.");
+          return;
+        }
+    
+        const base64Data = qrImageBase64.split("base64,")[1];
+    
+        // Save file using BlobUtil
+        const filePath = RNBlob.fs.dirs.CacheDir + `/qr_${Date.now()}.png`;
+    
+        await RNBlob.fs.writeFile(filePath, base64Data, "base64");
+    
+        console.log("BLOB FILE PATH:", filePath);
+    
+        // Generate content:// URI automatically
+        const contentUri = await RNBlob.fs.stat(filePath).then((info) => info.path);
+    
+        console.log("CONTENT URI:", contentUri);
+    
+        await Share.open({
+          url: "file://" + contentUri,
+          type: "image/png",
+          failOnCancel: false,
+        });
+    
+      } catch (error) {
+        console.log("Share error:", error);
+      }
+    };
+
+    const getQRCode = async () => {
+      try {
+        setLoadingQR(true);
+    
+        const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
+        const base64 = result?.qrImage;
+    
+        if (!base64) {
+          setLoadingQR(false);
+          Alert.alert("Error", "Failed to generate QR code.");
+          return;
+        }
+    
+        // DO NOT manipulate base64 string from backend  
+        setQrImageBase64(base64);
+    
+        setLoadingQR(false);
+    
+      } catch (error) {
+        setLoadingQR(false);
+        Alert.alert("Error", "Something went wrong.");
+      }
+    };
 
   return (
     <View style={styles.container}>
@@ -90,7 +155,7 @@ const ViewShop = ({ navigation, route }) => {
               resizeMode="contain"
             />
             <Text style={styles.phoneText}>{shop.phone}</Text>
-          <TouchableOpacity style={styles.generateQRButton}>
+          <TouchableOpacity onPress={getQRCode} style={styles.generateQRButton}>
             <Text style={styles.generateQRText}>Generate New QR</Text>
           </TouchableOpacity>
           </View>
@@ -111,7 +176,7 @@ const ViewShop = ({ navigation, route }) => {
             <Text style={styles.sectionTitle}>Categories</Text>
           </View>
           <View style={styles.tagsContainer}>
-            {(showAllCategories ? shop.categories : shop.categories.slice(0, 3)).map((category, index) => (
+            {(showAllCategories ? shop.categories : shop?.categories?.slice(0, 3)).map((category, index) => (
               <>
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{category}</Text>
@@ -165,7 +230,9 @@ const ViewShop = ({ navigation, route }) => {
       <View style={styles.footer}>
         <FullwidthButton 
           title="Manage Shop" 
-          onPress={() => {navigation.navigate(NavigationStrings.DNT_AddNewCategory)}}
+          onPress={() => {navigation.navigate(NavigationStrings.DNT_AddNewCategory,{
+            shopId:paramsshop?._id
+          })}}
         />
       </View>
 

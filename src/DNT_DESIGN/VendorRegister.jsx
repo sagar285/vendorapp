@@ -10,7 +10,7 @@ import {
   Image,
   PermissionsAndroid,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import Header from "../Components/Header/Header";
 import Input from "../Components/Input";
 import FullwidthButton from "../Components/FullwidthButton";
@@ -20,13 +20,12 @@ import { FONTS } from "../Theme/FontFamily";
 import { useNavigation } from "@react-navigation/native";
 import NavigationStrings from "../Navigations/NavigationStrings";
 import { useAppContext } from "../Context/AppContext";
-import { apiPost } from "../Api/Api";
+import { apiGet, apiPost } from "../Api/Api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Geolocation from "react-native-geolocation-service";
 const VendorRegister = () => {
   const navigation = useNavigation();
   const { user } = useAppContext();
-
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -34,6 +33,8 @@ const VendorRegister = () => {
   const [numberOfShops, setNumberOfShops] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [pendingRequest, setPendingRequest] = useState(false);
+   const [userShops, setUserShops] = useState([]);
 
   const requestLocationPermission = async () => {
   if (Platform.OS === "android") {
@@ -120,7 +121,7 @@ const reverseGeocodeOSM = async (lat, lng) => {
     }
     console.log(userId,"userid dekh ayiii hai kya eske passsssssssssss")
    }
-   getdatauserid()
+
 
 
    
@@ -164,6 +165,45 @@ const reverseGeocodeOSM = async (lat, lng) => {
       setLoading(false);
     }
   };
+
+    
+  
+     const getUserRequest = async () => {
+        const result = await apiGet("/admin/vendor_request");
+        console.log(result,"usussususususu")
+        if (result.message == "user vedor request succesfully") {
+          const request = result.result;
+          console.log(request == 'null',"request",request == null)
+          if (request?.status == "PENDING" && request !='null') {
+          return navigation.navigate( NavigationStrings.DNT_VerifyingDetails)
+          }
+          if (request == null) {
+          return navigation.navigate( NavigationStrings.BottomTab)
+          } 
+        }
+      };
+  
+  
+        const getShops = async () => {
+          try {
+            const result = await apiGet('/vendor/shop/get');
+            if (result.message === 'user shop get succed') {
+              setUserShops(result.data);
+              if(result.data.length > 0){
+                navigation.navigate( NavigationStrings.DNT_Home)
+              }
+            }
+          } catch (error) {
+            if (error.message === 'Not have valid role') {
+              setopenform(true);
+            }
+          }
+        };
+  
+   useEffect(() => {
+      getUserRequest();
+      // getShops();
+    }, []);
 
   return (
     <KeyboardAvoidingView

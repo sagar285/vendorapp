@@ -20,6 +20,8 @@ import FullwidthButton from './FullwidthButton';
 import BigInput from './BigInput';
 import NavigationStrings from '../Navigations/NavigationStrings';
 import { useNavigation } from '@react-navigation/native';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { apiPost } from '../Api/Api';
 const QuantityDropdown = ({ value, onSelect, options }) => {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -88,7 +90,9 @@ const SmallInput = ({ placeholder, keyboardType, value, onChangeText }) => {
 const EditAddMenuiIemModal = ({ 
   visible, 
   onClose, 
-  title = "Add Menu Item"
+  title = "Add Menu Item",
+  selectedCategoryId,
+  shopId,
 }) => {
     const navigation = useNavigation()
   const slideAnim = useRef(new Animated.Value(600)).current;
@@ -96,7 +100,13 @@ const EditAddMenuiIemModal = ({
   const lastGestureDy = useRef(0);
   const [selectedType, setSelectedType] = useState('Veg');
   const [quantities, setQuantities] = useState([{ quantity: '', price: '' }]);
+  const [menuName, setMenuName] = useState('');
+  const [menuDesc, setMenuDesc] = useState('');
+    const [menuOffer, setMenuOffer] = useState('');
+      const [menuPrice, setMenuPrice] = useState('');
+        const [menuImage, setMenuImage] = useState(null);
 
+        
   useEffect(() => {
     if (visible) {
       translateY.setValue(0);
@@ -182,6 +192,50 @@ const EditAddMenuiIemModal = ({
     setQuantities(newQuantities);
   };
 
+    const addMenuItem = async () => {
+      if (!menuName || !menuPrice || !selectedCategoryId) return;
+  
+      try {
+        const form = new FormData();
+        form.append('shopId', shopId);
+        form.append('categoryId', selectedCategoryId);
+        form.append('name', menuName);
+        form.append('description', menuDesc);
+        form.append('type', menuType);
+        form.append('price', Number(menuPrice));
+        form.append('offerPrice', Number(menuOffer));
+        form.append('quantityOptions', JSON.stringify(quantities));
+  
+        if (menuImage) form.append('image', menuImage);
+  
+        await apiPost('/menu/item/add', form, {}, true)
+        setAddMenuModal(false);
+        resetInputs();
+        getCategories();
+      } catch (err) {
+        console.log('Add item error:', err);
+      }
+    };
+
+
+  const pickMenuImage = async () => {
+    launchImageLibrary({ mediaType: 'photo', quality: 0.7 }, response => {
+      if (response.didCancel || response.errorCode) return;
+      const img = response?.assets?.[0];
+      if (img) {
+        setMenuImage({
+          uri: img.uri,
+          type: img.type,
+          name: img.fileName || `menu-${Date.now()}.jpg`,
+        });
+      }
+    });
+  };
+
+
+
+
+
   return (
     <Modal
       visible={visible}
@@ -217,17 +271,31 @@ const EditAddMenuiIemModal = ({
         
             <View style={styles.UploadContainer}>
               <Text style={styles.UploadText}>Upload Image</Text>
-              <UploadCard/>
+              <UploadCard
+              onPress={pickMenuImage}
+              isArray={true}
+              image={menuImage}
+              maxImages={5}
+              onRemove={index => {
+                const newImages = [...shopImages];
+                newImages.splice(index, 1);
+                setMenuImage(newImages);
+              }}
+              />
             </View>
             
             <Input
               label="Item Name*"
               placeholder="Enter item name"
+              value={menuName}
+              onChangeText={setMenuName}
             />
             
             <BigInput
               label="Item Description*"
               placeholder="Enter description"
+              value={menuDesc}
+              onChangeText={setMenuDesc}
             />
 
             <View style={styles.sectionContainer}>
@@ -260,12 +328,16 @@ const EditAddMenuiIemModal = ({
               label="Price*"
               placeholder="Enter price"
               keyboardType="numeric"
+              value={menuPrice}
+              onChangeText={setMenuPrice}
             />
             
             <Input
               label="Offer Price"
               placeholder="Enter offer price"
               keyboardType="numeric"
+              value={menuOffer}
+              onChangeText={setMenuOffer}
             />
             
             <View style={styles.sectionContainer}>
@@ -320,10 +392,10 @@ const EditAddMenuiIemModal = ({
                 </TouchableOpacity>
             </View>
 
-          
+            {/* onPress={()=>navigation.navigate(NavigationStrings.DNT_Categoris)} */}
         </ScrollView>
           <View style={{ marginBottom: hp(0.4) }}>
-             <FullwidthButton title="Submit" onPress={()=>navigation.navigate(NavigationStrings.DNT_Categoris)} />
+             <FullwidthButton title="Submit" onPress={()=>addMenuItem()} />
           </View>
       </Animated.View>
     </Modal>

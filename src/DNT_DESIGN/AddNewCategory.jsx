@@ -6,9 +6,15 @@ import { FONTS } from '../Theme/FontFamily';
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
 import CategoryModal from "../Components/CategoryModal"
-const AddNewCategory = () => {
+
+const AddNewCategory = ({route}) => {
   const navigation = useNavigation()
   const [modalVisible,setModalVisible] = useState(false)
+  const shopId = route?.params?.shopId;
+
+
+
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -44,6 +50,7 @@ Please start by creating one.
     visible={modalVisible}
   onClose={() => setModalVisible(false)}
   title="Your Title"
+  shopId={shopId}
   />
     </View>
   )

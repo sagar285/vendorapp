@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TextInput, ScrollView, Image, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import FullwidthButton from '../Components/FullwidthButton';
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
@@ -9,7 +9,11 @@ import { FONTS } from '../Theme/FontFamily';
 import NavigationStrings from '../Navigations/NavigationStrings';
 
 const AddYourShop = ({ navigation }) => {
- 
+    const [shopName, setShopName] = useState("")
+     const [phone, setPhone] = useState("")
+     const [shopAddress, setShopAddress] = useState("")
+     const [shopLogo, setShopLogo] = useState(null)
+     const [shopImages, setShopImages] = useState([])
   return (
     <View style={styles.container}>
         
@@ -34,6 +38,8 @@ const AddYourShop = ({ navigation }) => {
             <Input
               label="Shop Name*"
               placeholder="Enter details here..."
+              value={shopName}
+              onChangeText={setShopName}
             />
         </View>
 
@@ -42,6 +48,8 @@ const AddYourShop = ({ navigation }) => {
             <BigInput
               label="Shop’s Full Address*"
               placeholder="Enter details here..."
+              value={shopAddress}
+              onChangeText={setShopAddress}
             />
         </View>
 
@@ -51,6 +59,9 @@ const AddYourShop = ({ navigation }) => {
               label="Contact Number*"
               placeholder="+91 - 9999999999"
               keyboardType="phone-pad"
+              value={phone}
+              maxLength={10}
+              onChangeText={setPhone}
             />
         </View>
 
@@ -60,7 +71,11 @@ const AddYourShop = ({ navigation }) => {
       <View style={styles.footer}>
         <FullwidthButton 
             title="Next" 
-            onPress={() => {navigation.navigate(NavigationStrings.DNT_AddYourShopDetails)}}
+            onPress={() => {navigation.navigate(NavigationStrings.DNT_AddYourShopDetails,{
+              shopName:shopName,
+              shopAddress:shopAddress,
+              phone:phone
+            })}}
         />
       </View>
 

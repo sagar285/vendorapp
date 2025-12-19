@@ -1,56 +1,86 @@
 import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from '../Theme/FontFamily';
 import ShopCard from '../Components/Cards/ShopCard';
-
+import { apiGet } from '../Api/Api';
+import RNFS from "react-native-fs";
+import Share from "react-native-share";
+import RNBlob from "react-native-blob-util";
 const Home = () => {
-  const [shops, setShops] = useState([
-    {
-      id: 1,
-      name: "Balaji Boot House",
-      images: [
-        require("../assets/images/img.png"),
-        require("../assets/images/img.png"),
-        require("../assets/images/img.png"),
-      ],
-      location: "Indore",
-      phone: "9999999999",
-    },
-    {
-      id: 2,
-      name: "Shree Vinayak Optical",
-      images: [
-        require("../assets/images/img.png"),
-        require("../assets/images/img.png"),
-        require("../assets/images/img.png"),
-      ],
-      location: "Indore",
-      phone: "9999999999",
-    },
-    {
-      id: 3,
-      name: "Dhruv Earth Moverse",
-      images: [
-        require("../assets/images/img.png"),
-        require("../assets/images/img.png"),
-        require("../assets/images/img.png"),
-      ],
-      location: "Indore",
-      phone: "9999999999",
-    },
-  ]);
+
+
+   const [userShops, setUserShops] = useState([]);
+     const [loadingQR, setLoadingQR] = useState(false);
+     const [qrImageBase64, setQrImageBase64] = useState(null);
+
+  const getShops = async () => {
+    try {
+      const result = await apiGet('/vendor/shop/get');
+      console.log(result,"user shop reust")
+      if (result.message === 'user shop get succed') {
+        setUserShops(result.data);  
+      }
+    } catch (error) {
+      if (error.message === 'Not have valid role') {
+        setopenform(true);
+      }
+    }
+  };
+
+  console.log(userShops,"kkkkk")
+
+   useEffect(() => {
+      getShops();
+    }, []);
 
   const handleViewShop = (shop) => {
     console.log("View Shop:", shop);
     // Add your navigation logic here
   };
 
-  const handleShareQR = (shop) => {
-    console.log("Share QR Code:", shop);
-    // Add your share logic here
-  };
+
+
+   const handleShareQR = async (shop) => {
+      try {
+        setLoadingQR(true);
+    
+        const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
+        const base64 = result?.qrImage;
+    
+        if (!base64) {
+          setLoadingQR(false);
+          Alert.alert("Error", "Failed to generate QR code.");
+          return;
+        }
+    
+        // DO NOT manipulate base64 string from backend  
+        setQrImageBase64(base64);
+    
+        setLoadingQR(false);
+
+        const base64Data = base64.split("base64,")[1];
+              const filePath = RNBlob.fs.dirs.CacheDir + `/qr_${Date.now()}.png`;
+               await RNBlob.fs.writeFile(filePath, base64Data, "base64");
+               console.log("BLOB FILE PATH:", filePath);
+
+
+          const contentUri = await RNBlob.fs.stat(filePath).then((info) => info.path);
+          
+              console.log("CONTENT URI:", contentUri);
+              await Share.open({
+                url: "file://" + contentUri,
+                type: "image/png",
+                failOnCancel: false,
+              });
+
+    
+      } catch (error) {
+        setLoadingQR(false);
+        Alert.alert("Error", "Something went wrong.");
+      }
+    };
 
   return (
     <View style={styles.container}>
@@ -76,7 +106,7 @@ const Home = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {shops.map((shop) => (
+        {userShops?.map((shop) => (
           <ShopCard 
             key={shop.id} 
             shop={shop}

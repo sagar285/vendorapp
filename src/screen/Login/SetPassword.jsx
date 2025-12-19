@@ -37,7 +37,6 @@ const SetPassword = ({ route }) => {
       };
 
       const result = await apiPost(url, payload);
-      console.log("Password Set:", result);
 
       if (result) {
         await AsyncStorage.setItem("token",result.token);

@@ -6,9 +6,16 @@ import { wp,hp } from "../Theme/Dimensions";
 import { FONTS } from "../Theme/FontFamily";
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
+import { useAppContext } from '../Context/AppContext';
 const FirstPage = () => {
   const navigation = useNavigation();
+  const {user} =useAppContext()
 
+
+  if(user){
+    navigation.navigate(NavigationStrings.DNT_VENDORREGISTER)
+    return;
+  }
 
   const goToLogin = () =>{
     navigation.navigate(NavigationStrings.DNT_LOGIN)

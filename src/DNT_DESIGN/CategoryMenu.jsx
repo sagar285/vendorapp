@@ -1,17 +1,43 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity, FlatList } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import FullwidthButton from '../Components/FullwidthButton';
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from '../Theme/FontFamily';
 import EditAddMenuiIemModal from "../Components/EditAddMenuiIemModal"
-const CategoryMenu = ({ navigation }) => {
+import { apiGet, BACKEND_URL } from '../Api/Api';
+import { AddMenu } from '../screen';
+const CategoryMenu = ({ navigation,route }) => {
+  const shopId =route.params.shopId;
   const [categories, setCategories] = useState([
     { id: 1, name: 'Category Name #1', items: 0 },
     { id: 2, name: 'Category Name #2', items: 2 },
     { id: 3, name: 'Category Name #3', items: 11 }
   ]);
     const [modalVisible,setModalVisible] = useState(false)
+    const [selectedCategoryId,setSelectedCategoryId] =useState(null);
+
+
+
+      const getCategories = async () => {
+        try {
+          const res = await apiGet(`/menu/category/${shopId}`);
+          console.log(res,"categoriesssss")
+          setCategories(res?.categories || []);
+        } catch (err) {
+          console.log('Get category error:', err);
+        }
+      };
+
+      const addMenuItem = (id) =>{
+        setSelectedCategoryId(id);
+        setModalVisible(true)
+      }
+
+
+      useEffect(()=>{
+        getCategories()
+      },[])
   
 
   const renderCategoryItem = ({ item }) => (
@@ -20,9 +46,9 @@ const CategoryMenu = ({ navigation }) => {
         {/* Gray Background Box */}
         <View style={styles.CategoryiconContainer}>
           <Image
-            source={require("../assets/images/Category.png")}
+            source={{ uri: `${BACKEND_URL}/${item.icon}` }}
             style={styles.categoryIcon}
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </View>
         
@@ -30,13 +56,13 @@ const CategoryMenu = ({ navigation }) => {
         <View style={styles.categoryTextContainer}>
           <Text style={styles.categoryName}>{item.name}</Text>
           <Text style={styles.categoryItems}>
-            {item.items === 0 ? 'No Items' : `${item.items} ${item.items === 1 ? 'Item' : 'Items'}`}
+            {item.itemCount === 0 ? 'No Items' : `${item.itemCount} ${item.itemCount === 1 ? 'Item' : 'Items'}`}
           </Text>
         </View>
       </View>
 
       <View style={styles.categoryActions}>
-        <TouchableOpacity style={styles.addItemsButton}>
+        <TouchableOpacity onPress={()=>addMenuItem(item._id)} style={styles.addItemsButton}>
           <Text style={styles.addItemsText}>+  Add Items</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuButtonContainer}>
@@ -69,7 +95,7 @@ const CategoryMenu = ({ navigation }) => {
       <FlatList
         data={categories}
         renderItem={renderCategoryItem}
-        keyExtractor={(item) => item.id.toString()}
+        // keyExtractor={(item) => item.id.toString()}
         scrollEnabled={true}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
@@ -86,6 +112,7 @@ const CategoryMenu = ({ navigation }) => {
       visible={modalVisible}
   onClose={() => setModalVisible(false)}
   title="Your Title"
+  selectedCategoryId={selectedCategoryId}
       />
  
     </View>

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 const AppContext = createContext(null);
 
@@ -27,6 +28,18 @@ export const AppProvider = ({ children }) => {
     setIsLoading,
     ActiveLoader,setActiveLoader
   };
+
+  const checkUser = async () =>{
+    const getuserfromasyncstorage = await AsyncStorage.getItem("userdata")
+    console.log(getuserfromasyncstorage,"kkkkkkk")
+    if(getuserfromasyncstorage){
+      setUser(JSON.parse(getuserfromasyncstorage))
+    }
+  }
+
+  useEffect(()=>{
+    checkUser()
+  },[]) 
 
 
   return (

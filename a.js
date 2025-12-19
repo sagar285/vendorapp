@@ -1,12 +1,10 @@
-function erroCheck(){
-    throw new Error("params is required")
+// Javscript inteview question
+
+const obje = {} 
+let key  = "constructor";
+if( Object.hasOwn(obje,key)){
+    console.log(" key found")
+}else{
+    console.log("No Key Found")
 }
 
-function requireParameterFunction(param = erroCheck()){
-    console.log(param)
-}
-try {
-    requireParameterFunction()
-} catch (error) {
-    console.log(error.message)  
-}

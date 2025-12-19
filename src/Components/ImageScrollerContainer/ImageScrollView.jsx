@@ -2,6 +2,7 @@ import { View, Image, ScrollView } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { wp, hp } from "../../Theme/Dimensions";
 import { COLORS } from "../../Theme/Colors";
+import { BACKEND_URL } from '../../Api/Api';
 
 const ImageScrollView = ({ images }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -13,6 +14,11 @@ const ImageScrollView = ({ images }) => {
     const index = Math.round(contentOffsetX / viewWidth);
     setCurrentImageIndex(index);
   };
+
+    const getImageUrl = (path) => {
+      const clean = path.replace(/\\/g, "/");
+      return `${BACKEND_URL.replace("/api", "")}/${clean}`;
+    };
 
   return (
     <View style={{ position: 'relative', width: '100%', height: hp(25) }}>
@@ -28,7 +34,7 @@ const ImageScrollView = ({ images }) => {
         {images.map((image, index) => (
           <Image
             key={index}
-            source={image}
+            source={{uri:getImageUrl(image.imageUrl)}}
             style={{ width: wp(92), height: '100%' }}
             resizeMode="cover"
           />

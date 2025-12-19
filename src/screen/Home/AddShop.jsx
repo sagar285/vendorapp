@@ -90,6 +90,11 @@ import NavigationStrings from '../../Navigations/NavigationStrings'
         console.log(error, "Error in submit shop")
       }
     }
+
+
+
+
+    
   
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>

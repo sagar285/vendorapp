@@ -1,5 +1,5 @@
  
- import React, { useRef, useEffect } from 'react';
+ import React, { useRef, useEffect,useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -17,15 +17,66 @@ import Input from './Input';
 import FullwidthButton from './FullwidthButton';
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { apiPost } from '../Api/Api';
 const CategoryModal = ({ 
   visible, 
   onClose, 
-  title = "Modal Title"
+  title = "Modal Title",
+  shopId
 }) => {
   const slideAnim = useRef(new Animated.Value(600)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const lastGestureDy = useRef(0);
   const navigation = useNavigation()
+const [newCatName, setNewCatName] = useState('');
+  const [addCategoryLoaidng, setaddCategoryLoading] = useState(false);
+
+      const [iconFile, setIconFile] = useState(null);
+        const pickIcon = async () => {
+          launchImageLibrary({ mediaType: 'photo', quality: 0.7 }, response => {
+            if (response.didCancel || response.errorCode) return;
+            const file = response?.assets?.[0];
+            if (file) {
+              setIconFile({
+                uri: file.uri,
+                type: file.type,
+                name: file.fileName || `cat-${Date.now()}.jpg`,
+              });
+            }
+          });
+        };
+
+
+
+          const addCategory = async () => {
+            if (!newCatName.trim()) return;
+            setaddCategoryLoading(true)
+            try {
+              const form = new FormData();
+              form.append('shopId', shopId);
+              form.append('name', newCatName);
+        
+              if (iconFile) form.append('icon', iconFile);
+        
+             const result = await apiPost('/menu/category/add', form, {}, true);
+            console.log(result,"/menu/category/add")
+              onClose();
+              setNewCatName('');
+              setIconFile(null);
+              setaddCategoryLoading(false)
+              navigation.navigate(NavigationStrings.DNT_CategoryMenu,{shopId:shopId})
+            } catch (err) {
+              setaddCategoryLoading(false)
+              console.log('Add category error:', err);
+            }
+          };
+
+
+
+
+
+
   useEffect(() => {
     if (visible) {
       translateY.setValue(0);
@@ -120,11 +171,19 @@ const CategoryModal = ({
             <Input
                 label="Category Name*"
               placeholder="Enter category name"
+              value={newCatName}
+              onChangeText={setNewCatName}
             />
             <Text style={styles.UploadText}>Upload Image</Text>
-            <UploadCard/>
+            <UploadCard
+                       onPress={pickIcon}
+                       image={iconFile}
+                       isArray={false}
+                       onRemove={() => setIconFile(null)}
+            />
+            {/* onPress={()=>navigation.navigate(NavigationStrings.DNT_CategoryMenu)} */}
           </View>
-           <FullwidthButton title="Submit" onPress={()=>navigation.navigate(NavigationStrings.DNT_CategoryMenu)} />
+           <FullwidthButton title="Submit"    onPress={addCategory} />
         </View>
       </Animated.View>
     </Modal>

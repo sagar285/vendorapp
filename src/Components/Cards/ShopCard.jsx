@@ -1,52 +1,69 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import React from 'react';
-import { COLORS } from "../../Theme/Colors";
-import { wp, hp } from "../../Theme/Dimensions";
+import { COLORS } from '../../Theme/Colors';
+import { wp, hp } from '../../Theme/Dimensions';
 import { FONTS } from '../../Theme/FontFamily';
 import ImageScrollView from '../ImageScrollerContainer/ImageScrollView';
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../../Navigations/NavigationStrings';
+import { BACKEND_URL } from '../../Api/Api';
 const ShopCard = ({ shop, onViewShop, onShareQR }) => {
-    const navigation = useNavigation()
+  console.log(shop, 'shop');
+  const navigation = useNavigation();
+  //  const logoUrl = shop.shopLogo
+  //               ? `${BACKEND_URL.replace('/api', '')}/${shop.shopLogo.replace(/\\/g, '/')}`
+  //               : null;
   return (
     <View style={styles.cardContainer}>
-      <ImageScrollView images={shop.images} />
+      {shop.shopImages.length > 0 && (
+        <ImageScrollView images={shop.shopImages} />
+      )}
 
       <View style={styles.infoContainer}>
-        <View style={{ flex: 1,flexDirection:"row",justifyContent:"space-between" }}>
-          <Text style={styles.shopName}>{shop.name}</Text>
-          
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Text style={styles.shopName}>{shop?.shopName}</Text>
+
           <View style={styles.detailsRow}>
             <View style={styles.detailItem}>
               <Image
-                source={require("../../assets/images/LocationPin.png")}
+                source={require('../../assets/images/LocationPin.png')}
                 style={styles.icon}
                 resizeMode="contain"
               />
-              <Text style={styles.detailText}>{shop.location}</Text>
+              <Text style={styles.detailText}>{shop?.shopAddress}</Text>
             </View>
-            
+
             <View style={styles.detailItem}>
               <Image
-                source={require("../../assets/images/Call.png")}
+                source={require('../../assets/images/Call.png')}
                 style={styles.icon}
                 resizeMode="contain"
               />
-              <Text style={styles.detailText}>{shop.phone}</Text>
+              <Text style={styles.detailText}>{shop?.phone}</Text>
             </View>
           </View>
         </View>
       </View>
 
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.viewButton}
-          onPress={() =>navigation.navigate(NavigationStrings.DNT_ViewShop)}
+          onPress={() =>
+            navigation.navigate(NavigationStrings.DNT_ViewShop, {
+              shop: shop,
+            })
+          }
         >
           <Text style={styles.viewButtonText}>View Shop</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.shareButton}
           onPress={() => onShareQR && onShareQR(shop)}
         >
@@ -73,7 +90,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(4),
     paddingTop: hp(2),
     paddingBottom: hp(1.5),
-
   },
   shopName: {
     fontSize: wp(3.6),
@@ -81,7 +97,6 @@ const styles = StyleSheet.create({
     color: COLORS.BlackText,
     fontFamily: FONTS.InterSemiBold,
     marginBottom: hp(1),
-
   },
   detailsRow: {
     flexDirection: 'row',

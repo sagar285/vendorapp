@@ -1,113 +1,212 @@
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
-import React from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import React, { useState } from 'react';
 import FullwidthButton from '../Components/FullwidthButton';
-import { COLORS } from "../Theme/Colors";
-import { wp, hp } from "../Theme/Dimensions";
+import { COLORS } from '../Theme/Colors';
+import { wp, hp } from '../Theme/Dimensions';
 import { FONTS } from '../Theme/FontFamily';
-import UploadCard from "../Components/UploadCard";
+import UploadCard from '../Components/UploadCard';
 import NavigationStrings from '../Navigations/NavigationStrings';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { apiPost } from '../Api/Api';
+const AddYourShopDetails = ({ navigation, route }) => {
+  const params = route.params;
+  console.log(params, 'params');
+  const [shopLogo, setShopLogo] = useState(null);
+  const [shopImages, setShopImages] = useState([]);
 
-const AddYourShopDetails = ({ navigation }) => {
+  const pickLogo = async () => {
+    const result = await launchImageLibrary({ mediaType: 'photo' });
+
+    if (!result.didCancel && result.assets?.length > 0) {
+      setShopLogo(result.assets[0]);
+    }
+  };
+
+  const pickMultipleImages = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      selectionLimit: 5,
+    });
+
+    if (!result.didCancel && result.assets?.length > 0) {
+      setShopImages([...shopImages, ...result.assets]);
+    }
+  };
+
+
+
+     const submitShop = async () => {
+       
+        try {
+    
+          let formData = new FormData()
+    
+          formData.append("shopName", params.shopName)
+          formData.append("phone", params.phone)
+          formData.append("shopAddress", params.shopAddress)
+    
+          if (shopLogo) {
+            formData.append("shopLogo", {
+              uri: shopLogo.uri,
+              type: shopLogo.type,
+              name: shopLogo.fileName || "shop_logo.jpg"
+            })
+          }
+    
+          shopImages.forEach((img, index) => {
+            formData.append("shopImages", {
+              uri: img.uri,
+              type: img.type,
+              name: img.fileName || `shop_image_${index}.jpg`
+            })
+          })
+  
+      
+    
+          const result = await apiPost(
+            "/vendor/shop/create",
+            formData,
+            {},
+            true // <-- multipart mode
+          );
+          if(result?.message == "Shop created successfully"){
+  navigation.navigate(NavigationStrings.DNT_SuccesFull)
+          }
+          else{
+            Alert.alert("Error in shop creating")
+          }
+          console.log(result,"apiPost result");
+           // true = multipart
+         
+        } catch (error) {
+          console.log(error, "Error in submit shop")
+        }
+      }
+
   return (
     <View style={styles.container}>
-      
       {/* Header */}
       <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
-              <Image
-                   source={require("../assets/images/LeftArrow.png")}
-                   style={styles.backIcon}
-                   resizeMode="contain"
-              />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Setup your shop</Text>
-          <View style={styles.emptyView} />
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButtonContainer}
+        >
+          <Image
+            source={require('../assets/images/LeftArrow.png')}
+            style={styles.backIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Setup your shop</Text>
+        <View style={styles.emptyView} />
       </View>
 
-      <View Style={styles.scrollContainer}>
-        
+      <ScrollView Style={styles.scrollContainer}>
         {/* Shop Info Section */}
         <View style={styles.detailsContainer}>
-            
-            {/* Shop Name Row */}
-            <View style={styles.infoRow}>
-                <Text style={styles.shopName}>Shop Name #1</Text>
-                <Image
-                    source={require("../assets/images/rightCheck.png")}
-                    style={styles.checkIcon}
-                    resizeMode="contain"
-                />
-            </View>
+          {/* Shop Name Row */}
+          <View style={styles.infoRow}>
+            <Text style={styles.shopName}>{params?.shopName}</Text>
+            <Image
+              source={require('../assets/images/rightCheck.png')}
+              style={styles.checkIcon}
+              resizeMode="contain"
+            />
+          </View>
 
-            {/* Address Row */}
-            <View style={[styles.infoRow, { alignItems: 'flex-start' }]}>
-                <Image
-                     source={require("../assets/images/LocationPin.png")}
-                     style={styles.icon}
-                     resizeMode="contain"
-                />
-                <Text style={styles.infoText}>
-                    1234, very very long field of address, then next line is also little lengthy of the shop’s location
-                </Text>
-               
-                <Image
-                    source={require("../assets/images/rightCheck.png")}
-                    style={styles.checkIcon}
-                    resizeMode="contain"
-                />
-               
-            </View>
+          {/* Address Row */}
+          <View style={[styles.infoRow, { alignItems: 'flex-start' }]}>
+            <Image
+              source={require('../assets/images/LocationPin.png')}
+              style={styles.icon}
+              resizeMode="contain"
+            />
+            <Text style={styles.infoText}>{params?.shopAddress}</Text>
 
-            {/* Phone Row */}
-            <View style={styles.infoRow}>
-                 <Image
-                     source={require("../assets/images/Call.png")}
-                     style={styles.icon}
-                     resizeMode="contain"
-                />
-                <Text style={styles.infoText}>9999999999</Text>
-                <Image
-                    source={require("../assets/images/rightCheck.png")}
-                    style={styles.checkIcon}
-                    resizeMode="contain"
-                />
-            </View>
+            <Image
+              source={require('../assets/images/rightCheck.png')}
+              style={styles.checkIcon}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Phone Row */}
+          <View style={styles.infoRow}>
+            <Image
+              source={require('../assets/images/Call.png')}
+              style={styles.icon}
+              resizeMode="contain"
+            />
+            <Text style={styles.infoText}>{params?.phone}</Text>
+            <Image
+              source={require('../assets/images/rightCheck.png')}
+              style={styles.checkIcon}
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
         {/* Instructions */}
         <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Please Upload Pictures</Text>
-            <Text style={styles.sectionSubTitle}>upto 5 pictures of your shop and a logo you{"\n"} use for your business.</Text>
+          <Text style={styles.sectionTitle}>Please Upload Pictures</Text>
+          <Text style={styles.sectionSubTitle}>
+            upto 5 pictures of your shop and a logo you{'\n'} use for your
+            business.
+          </Text>
         </View>
 
         {/* Logo Upload */}
         <View style={styles.uploadGroup}>
-            <Text style={styles.label}>Logo*</Text>
-            <UploadCard />
+          <Text style={styles.label}>Logo*</Text>
+          <UploadCard
+            onPress={pickLogo}
+            image={shopLogo}
+            isArray={false}
+            onRemove={() => setShopLogo(null)}
+          />
         </View>
 
         {/* Shop Images Upload */}
         <View style={styles.uploadGroup}>
-            <Text style={styles.label}>Shop Images (upto 5)*</Text>
-            <UploadCard />
-        </View>
+          <Text style={styles.label}>Shop Images (upto 5)*</Text>
 
-      </View>
+          <UploadCard
+            onPress={pickMultipleImages}
+            isArray={true}
+            image={shopImages}
+            maxImages={5}
+            onRemove={index => {
+              const newImages = [...shopImages];
+              newImages.splice(index, 1);
+              setShopImages(newImages);
+            }}
+          />
+        </View>
+      </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <FullwidthButton 
-            title="Submit" 
-            onPress={() => {navigation.navigate(NavigationStrings.DNT_SuccesFull)}}
-            style={{ backgroundColor: '#C4C4C4' }} 
+        <FullwidthButton
+          title="Submit"
+          onPress={() => {
+            submitShop()
+          }}
+          style={{ backgroundColor: '#C4C4C4' }}
         />
       </View>
-
     </View>
-  )
-}
+  );
+};
 
-export default AddYourShopDetails
+export default AddYourShopDetails;
 
 const styles = StyleSheet.create({
   container: {
@@ -130,14 +229,14 @@ const styles = StyleSheet.create({
     height: wp(6),
   },
   headerTitle: {
-    fontSize: wp(4.8), 
+    fontSize: wp(4.8),
     color: COLORS.BlackText,
     textAlign: 'center',
-    fontWeight: '700', 
-    fontFamily: FONTS.InterSemiBold, 
+    fontWeight: '700',
+    fontFamily: FONTS.InterSemiBold,
   },
   emptyView: {
-    width: wp(6), 
+    width: wp(6),
   },
   scrollContainer: {
     paddingTop: hp(1),
@@ -159,13 +258,13 @@ const styles = StyleSheet.create({
     width: wp(5),
     height: wp(5),
     marginRight: wp(3),
-    tintColor: '#555555', 
-    marginTop: hp(0.5), 
+    tintColor: '#555555',
+    marginTop: hp(0.5),
   },
   checkIcon: {
     width: wp(6),
     height: wp(6),
-    marginLeft: 'auto', 
+    marginLeft: 'auto',
   },
   infoText: {
     fontSize: wp(4),
@@ -204,13 +303,13 @@ const styles = StyleSheet.create({
     paddingBottom: hp(8),
     marginTop: 'auto',
   },
-  Rightcontainer:{
-    backgroundColor:COLORS.Green10,
-    borderWidth:wp(0.1),
-    borderColor:COLORS.Green10,
-    borderRadius:wp(1000),
+  Rightcontainer: {
+    backgroundColor: COLORS.Green10,
+    borderWidth: wp(0.1),
+    borderColor: COLORS.Green10,
+    borderRadius: wp(1000),
   },
-  detailsContainer:{
-    marginBottom:hp(1)
-  }
-})
+  detailsContainer: {
+    marginBottom: hp(1),
+  },
+});

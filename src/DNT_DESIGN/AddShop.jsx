@@ -1,12 +1,53 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from '../Theme/FontFamily';
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
+import React, { useEffect, useState } from 'react';
+import Home from './Home';
+import { apiGet } from '../Api/Api';
 const AddShop = () => {
     const Navigation = useNavigation()
+ const [userShops, setUserShops] = useState([]);
+  const [openform, setopenform] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+
+
+
+
+      const getShops = async () => {
+        try {
+          const result = await apiGet('/vendor/shop/get');
+          if (result.message === 'user shop get succed') {
+            if(result.data.length > 0){
+              Navigation.navigate(NavigationStrings.DNT_Home)
+            }
+          }
+        } catch (error) {
+          if (error.message === 'Not have valid role') {
+            setopenform(true);
+          }
+        }
+      };
+
+ useEffect(() => {
+ 
+    getShops();
+  }, []);
+
+
+ 
+
+ 
+ 
+
+
+
+
+
   return (
     <View style={styles.container}>
       <Image
