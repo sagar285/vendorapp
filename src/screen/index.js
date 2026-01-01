@@ -34,4 +34,5 @@ export {default as DNT_Order} from "../DNT_DESIGN/Order";
 export {default as DNT_Order_Details} from "../DNT_DESIGN/OrderDetails";
 export {default as DNT_Support_Request} from "../DNT_DESIGN/SupportRequest";
 export {default as DNT_Forgot_Password} from "../DNT_DESIGN/ForgotPassword";
+export {default as QR_Template} from "../Components/ShareQRTemplate/QR_Template";
 

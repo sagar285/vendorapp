@@ -22,6 +22,7 @@ async function createOrderChannel() {
 
 /* 🔔 SHOW NOTIFICATION */
 async function showOrderNotification(remoteMessage) {
+  console.log(remoteMessage,"notfication")
   const title =
     remoteMessage?.data?.title ||
     remoteMessage?.notification?.title ||
@@ -50,6 +51,33 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
   await createOrderChannel();
   await showOrderNotification(remoteMessage);
 });
+
+notifee.onBackgroundEvent(async ({ type, detail }) => {
+  const { notification, pressAction } = detail;
+
+  if (type === EventType.PRESS) {
+    console.log('User pressed notification in killed state', notification);
+    // Yahan agar koi specific screen pe bhejna hai toh logic likh sakte hain
+    // note: navigation yahan direct kaam nahi karega, initialNotification ka wait karna hoga
+    await notifee.cancelNotification(notification.id);
+  }
+});
+
+const handleKilledState = async () => {
+    // 1. Firebase check
+    const initialNotification = await messaging().getInitialNotification();
+    if (initialNotification) {
+      console.log("📩 Opened from killed state (Firebase):", initialNotification);
+      // Navigation logic yahan aayega
+    }
+
+    // 2. Notifee check (Best for Android)
+    const initialNotifee = await notifee.getInitialNotification();
+    if (initialNotifee) {
+      console.log("📩 Opened from killed state (Notifee):", initialNotifee.notification);
+      // Navigation logic yahan aayega
+    }
+  };
 
 const App = () => {
   /* 🔐 PERMISSIONS */

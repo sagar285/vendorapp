@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Keyboard
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import Header from "../Components/Header/Header";
@@ -30,6 +31,7 @@ const SupportRequest = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   // Fetch all support requests
   const getVendorRequest = async () => {
@@ -48,6 +50,22 @@ const SupportRequest = () => {
   useEffect(() => {
     getVendorRequest();
   }, []);
+
+  useEffect(() => {
+  const showSub = Keyboard.addListener("keyboardDidShow", () => {
+    setKeyboardVisible(true);
+  });
+
+  const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+    setKeyboardVisible(false);
+  });
+
+  return () => {
+    showSub.remove();
+    hideSub.remove();
+  };
+}, []);
+
 
   // Create new support request
   const handleSubmit = async () => {
@@ -169,7 +187,7 @@ const SupportRequest = () => {
     >
       <View style={styles.container}>
         <ScrollView
-          contentContainerStyle={{ paddingBottom: hp(20) }}
+          contentContainerStyle={{ paddingBottom: hp(25) }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -211,7 +229,8 @@ const SupportRequest = () => {
                   placeholder="+91 - 9876543210"
                   value={phone}
                   onChangeText={setPhone}
-                  keyboardType="phone-pad"
+                  keyboardType="numeric"
+                  maxLength={10}
                 />
 
                 {errorMsg ? (
@@ -286,7 +305,8 @@ const SupportRequest = () => {
         </ScrollView>
 
         {/* BOTTOM BUTTONS */}
-        {shouldShowForm && (
+        {shouldShowForm && !isKeyboardVisible && (
+        // {shouldShowForm && (
           <View style={styles.bottomButton}>
             {isEditing && (
               <TouchableOpacity
@@ -451,7 +471,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     gap: hp(1),
   },
-
+ 
   cancelButton: {
     backgroundColor: COLORS.white,
     borderWidth: 1,

@@ -16,7 +16,7 @@ const Tab = createBottomTabNavigator();
 const TabItem = ({ focused, label, icon, isProfile = false }) => {
   const {user} =useAppContext()
 
-  console.log(user,"usersssss")
+  // console.log(user,"usersssss")
   return (
     <View style={[
       styles.tabItemContainer, 

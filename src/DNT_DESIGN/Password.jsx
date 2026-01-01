@@ -92,7 +92,7 @@ const Password = () => {
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: hp(25) }}
+              contentContainerStyle={{ paddingBottom: hp(10) }}
             >
               {/* ---------- HEADER ---------- */}
               <View style={styles.headerSpacing}>
@@ -157,7 +157,7 @@ const Password = () => {
 
                 <Input
                   label="Confirm Password"
-                  placeholder="Re-enter password"
+                  placeholder="password"
                   secureTextEntry
                   value={confirm}
                   onChangeText={setConfirm}

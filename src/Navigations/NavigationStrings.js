@@ -1,7 +1,7 @@
 import { DNT_AddNewCategory, DNT_AddShop, DNT_AddYourShop, DNT_AddYourShopDetails, DNT_Categoris, DNT_CategoryMenu, DNT_Home, DNT_Order, DNT_ResetPassword, DNT_SuccesFull, DNT_UserProfile, DNT_VerifyingDetails, DNT_ViewShop } from "../screen";
 import BottomTab from "../Navigations/BottomTabs"
 import { Suspense } from "react";
-
+import QR_Template from "../Components/ShareQRTemplate/QR_Template"
 export default {
       Signup:"signup",
       Login:"Login",
@@ -40,5 +40,6 @@ export default {
       DNT_Order:"Order",
       DNT_Order_Details:"Order_details",
       DNT_Support_Request:"DNT_Support_Request",
-      DNT_Forgot_Password:"DNT_Forgot_Password"
+      DNT_Forgot_Password:"DNT_Forgot_Password",
+      QR_Template:"QR_Template"
 }

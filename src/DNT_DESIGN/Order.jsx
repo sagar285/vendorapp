@@ -26,6 +26,7 @@ const Order = ({ navigation }) => {
     try {
       const url = '/vendor/shop/all_order';
       const res = await apiGet(url);
+      console.log(res,"eeeeeeerrrrrrrrrttttttttyyyyyyyuuuuuuuuiiiiii")
       setOrders(res?.orders || []);
     } catch (error) {
       console.log(error);
@@ -79,8 +80,9 @@ const Order = ({ navigation }) => {
 
   // Share Order
   const onShareOrder = async item => {
+    // console.log(item?.shopId?.shopAddress?.addressLine,"aaag")
     try {
-      const shopAddress = item?.shopId?.address || item?.shopId?.shopAddress;
+      const shopAddress = item?.shopId?.shopAddress?.addressLine;
 
       const orderAddress = item?.address?.addressLine;
 

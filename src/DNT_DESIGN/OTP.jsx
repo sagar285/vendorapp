@@ -62,7 +62,7 @@ const OTP = () => {
     const sec = timer % 60;
     return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   };
-
+   
   /* ================= OTP Input ================= */
   const handleChange = (text, index) => {
     if (!/^\d*$/.test(text)) return;
@@ -190,13 +190,21 @@ const OTP = () => {
 
         <View style={styles.bottomButtons}>
           <FullWidthButton
+            // title={
+            //   timer > 0
+            //     ? `Resend in ${formatTime()}`
+            //     : resendLoading
+            //     ? "Resend In"
+            //     : "Resend Code"
+            // }
             title={
-              timer > 0
-                ? `Resend in ${formatTime()}`
-                : resendLoading
-                ? "Resedn"
-                : "Resend Code"
-            }
+    <Text style={{ 
+      color: timer > 0 ? COLORS.white : COLORS.white, // Logic for color
+      fontFamily: FONTS.InterRegular 
+    }}>
+      {timer > 0 ? `Resend in ${formatTime()}` : "Resend Code"}
+    </Text>
+  }
             borderOnly
             disabled={timer > 0 || resendLoading}
             onPress={sendResetOtp}

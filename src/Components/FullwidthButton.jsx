@@ -9,12 +9,11 @@ const FullwidthButton = ({ title, onPress, borderOnly = false,isloading,formupda
       <TouchableOpacity
         onPress={onPress}
         disabled={formupdate ? true :false}
-        
         activeOpacity={ formupdate ? 0.1 :0.7}
         style={[
           styles.button,
           borderOnly && styles.borderButton, // border only style
-          {backgroundColor: formupdate ? COLORS.orange10 : COLORS.orange }
+          {backgroundColor: formupdate ? COLORS.orange10 : COLORS.orange },
         ]}
       >
         <Text

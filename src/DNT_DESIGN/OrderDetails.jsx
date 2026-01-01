@@ -85,7 +85,7 @@ useEffect(()=>{
     try {
       if (!item) return;
 
-      const shopAddress = item?.shopId?.address || item?.shopId?.shopAddress;
+      const shopAddress = item?.shopId?.shopAddress?.addressLine;
 
       const orderAddress = item?.address?.addressLine;
 

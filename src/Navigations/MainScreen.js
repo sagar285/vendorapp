@@ -75,6 +75,11 @@ export default function (Stack) {
         component={Screen.DNT_VerifyingDetails}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name={NavigationString.QR_Template}
+        component={Screen.QR_Template}
+        options={{ headerShown: false }}
+      />
       
       <Stack.Screen 
       name={NavigationString.BottomTab} 

@@ -93,7 +93,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
             })
           })
   
-      console.log(formData,"formdataa")
+      // console.log(formData,"formdataa")
     
           const result = await apiPost(
             "/vendor/shop/create",
@@ -102,7 +102,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
             true // <-- multipart mode
           );
 
-          console.log("shop addresss",result)
+          console.log("shop addresssssssssssssss",result)
           if(!result.success){
             seterrormessage(result.message)
             setformupdate(false)

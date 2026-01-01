@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity,Alert } from 'react-native';
-import React from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity,Alert,ActivityIndicator } from 'react-native';
+import React,{useState} from 'react';
 import { COLORS } from '../../Theme/Colors';
 import { wp, hp } from '../../Theme/Dimensions';
 import { FONTS } from '../../Theme/FontFamily';
@@ -8,11 +8,28 @@ import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../../Navigations/NavigationStrings';
 import { apiDelete, BACKEND_URL } from '../../Api/Api';
 const ShopCard = ({ shop, onViewShop, onShareQR,getusershops }) => {
+ const [isSharing, setIsSharing] = useState(false);
+
   console.log(shop, 'shop');
   const navigation = useNavigation();
   //  const logoUrl = shop.shopLogo
   //               ? `${BACKEND_URL.replace('/api', '')}/${shop.shopLogo.replace(/\\/g, '/')}`
   //               : null;
+
+ // ShopCard.js mein handleSharePress ko aise update karein
+const handleSharePress = async () => {
+  if (onShareQR) {
+    setIsSharing(true); // 1. Loader yahan start hua
+    try {
+      // 2. Humne function ko 'setIsSharing' pass kar diya taaki wo khud isse false kar sake
+      await onShareQR(shop, (value) => setIsSharing(value)); 
+    } catch (error) {
+      console.log("Share Error:", error);
+      setIsSharing(false); // Sirf unexpected crash par band karne ke liye
+    }
+    // Note: finally block hata diya gaya hai taaki setTimeout ka wait ho sake
+  }
+};
 
 
     const deleteItems = itemId => {
@@ -90,11 +107,16 @@ const ShopCard = ({ shop, onViewShop, onShareQR,getusershops }) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.shareButton}
-          onPress={() => onShareQR && onShareQR(shop)}
-        >
-          <Text style={styles.shareButtonText}>Share QR Code</Text>
-        </TouchableOpacity>
+  style={[styles.shareButton, isSharing && { opacity: 0.8 }]} 
+  onPress={handleSharePress}
+  disabled={isSharing}
+>
+  {isSharing ? (
+    <ActivityIndicator size="small" color={COLORS.white} />
+  ) : (
+    <Text style={styles.shareButtonText}>Share QR Code</Text>
+  )}
+</TouchableOpacity>
 
         <TouchableOpacity onPress={()=>deleteItems(shop._id)} style={styles.DeleteButton}>
               <Image

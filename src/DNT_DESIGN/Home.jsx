@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   TextInput
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useRef} from 'react';
 import { COLORS } from '../Theme/Colors';
 import { wp, hp } from '../Theme/Dimensions';
 import { FONTS } from '../Theme/FontFamily';
@@ -20,6 +20,8 @@ import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppContext } from '../Context/AppContext';
+import QR_Template from "../Components/ShareQRTemplate/QR_Template"
+import ViewShot from "react-native-view-shot";
 
 const Home = () => {
   const navigation = useNavigation();
@@ -31,12 +33,15 @@ const Home = () => {
 
   const [loadingQR, setLoadingQR] = useState(false);
   const [qrImageBase64, setQrImageBase64] = useState(null);
+  const viewShotRef = useRef();
+const [tempShopData, setTempShopData] = useState(null);
+const [tempQR, setTempQR] = useState(null);
+ 
 
-
-
-  const uploadAsyncFCMtoken = async () => {
+  const uploadAsyncFCMtoken =  async () => {
     try {
-      const result = await AsyncStorage.getItem('fcmtoken');
+      const result = await AsyncStorage.getItem('fcm_token');
+      console.log(result,"chack fcm toker aarha hai ki nhi ")
       if (result) {
         const url = '/fcmtoken/';
         const payload = {
@@ -84,43 +89,171 @@ const Home = () => {
     // Add your navigation logic here
   };
 
-  const handleShareQR = async shop => {
-    try {
-      setLoadingQR(true);
+  // const handleShareQR = async shop => {
+  //   try {
+  //     setLoadingQR(true);
 
-      const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
-      const base64 = result?.qrImage;
+  //     const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
+  //     const base64 = result?.qrImage;
 
-      if (!base64) {
-        setLoadingQR(false);
-        Alert.alert('Error', 'Failed to generate QR code.');
-        return;
-      }
+  //     if (!base64) {
+  //       setLoadingQR(false);
+  //       Alert.alert('Error', 'Failed to generate QR code.');
+  //       return;
+  //     }
 
-      // DO NOT manipulate base64 string from backend
-      setQrImageBase64(base64);
+  //     // DO NOT manipulate base64 string from backend
+  //     setQrImageBase64(base64);
 
-      setLoadingQR(false);
+  //     setLoadingQR(false);
 
-      const base64Data = base64.split('base64,')[1];
-      const filePath = RNBlob.fs.dirs.CacheDir + `/qr_${Date.now()}.png`;
-      await RNBlob.fs.writeFile(filePath, base64Data, 'base64');
-      console.log('BLOB FILE PATH:', filePath);
+  //     const base64Data = base64.split('base64,')[1];
+  //     const filePath = RNBlob.fs.dirs.CacheDir + `/qr_${Date.now()}.png`;
+  //     await RNBlob.fs.writeFile(filePath, base64Data, 'base64');
+  //     console.log('BLOB FILE PATH:', filePath);
 
-      const contentUri = await RNBlob.fs.stat(filePath).then(info => info.path);
+  //     const contentUri = await RNBlob.fs.stat(filePath).then(info => info.path);
 
-      console.log('CONTENT URI:', contentUri);
-      await Share.open({
-        url: 'file://' + contentUri,
-        type: 'image/png',
-        failOnCancel: false,
-      });
-    } catch (error) {
-      setLoadingQR(false);
-      Alert.alert('Error', 'Something went wrong.');
+  //     console.log('CONTENT URI:', contentUri);
+  //     await Share.open({
+  //       url: 'file://' + contentUri,
+  //       type: 'image/png',
+  //       failOnCancel: false,
+  //     });
+  //   } catch (error) {
+  //     setLoadingQR(false);
+  //     Alert.alert('Error', 'Something went wrong.');
+  //   }
+  // };
+
+  // const handleShareQR = async (shop) => {
+  //   try {
+  //     setLoadingQR(true);
+
+  //     // Step 1: API se QR image lo
+  //     const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
+  //     const base64 = result?.qrImage;
+
+  //     if (!base64) {
+  //       setLoadingQR(false);
+  //       Alert.alert('Error', 'Failed to generate QR code.');
+  //       return;
+  //     }
+
+  //     // Step 2: State ko update karo (yeh re-render karega)
+  //     setTempShopData(shop);
+  //     setTempQR(base64);
+
+  //     // Step 3: ViewShot ko capture karne de (timing important hai)
+  //     // 1500ms wait karo - images load ho jayengi
+  //     setTimeout(async () => {
+  //       try {
+  //         if (viewShotRef.current) {
+  //           console.log('✅ Capturing ViewShot...');
+            
+  //           // Capture karo
+  //           const uri = await viewShotRef.current.capture();
+  //           console.log('✅ Capture success:', uri);
+
+  //           // Share dialog kholo
+  //           await Share.open({
+  //             url: uri,
+  //             type: 'image/png',
+  //             failOnCancel: false,
+  //           });
+
+  //         } else {
+  //           console.log('❌ ViewShot ref not available');
+  //           Alert.alert('Error', 'Failed to capture template');
+  //         }
+  //       } catch (error) {
+  //         console.log('❌ Capture error:', error);
+  //         Alert.alert('Error', 'Failed to share QR code');
+  //       } finally {
+  //         setLoadingQR(false);
+  //         // Clear data ke baad
+  //         setTimeout(() => {
+  //           setTempShopData(null);
+  //           setTempQR(null);
+  //         }, 500);
+  //       }
+  //     }, 1500);
+
+  //   } catch (error) {
+  //     setLoadingQR(false);
+  //     console.log('Error:', error);
+  //     Alert.alert('Error', 'Something went wrong');
+  //   }
+  // };
+
+  const handleShareQR = async (shop,setLocalLoading) => {
+  try {
+      // Step 1: API se QR image lo
+    const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
+    const base64 = result?.qrImage;
+
+    if (!base64) {
+      setLocalLoading(false);
+      Alert.alert('Error', 'Failed to generate QR code.');
+      return;
     }
-  };
 
+    console.log('🔄 Setting shop data and QR...');
+    
+    // Step 2: State ko update karo
+    setTempShopData(shop);
+    setTempQR(base64);
+
+    // Step 3: Images load hone de (2-3 seconds)
+    // ⏳ Pehle 2 seconds wait - images HTTP se download ho jayein
+    setTimeout(async () => {
+      console.log('⏳ Waiting for images to load...');
+      
+      // ⏳ Phir 1 second aur wait - ViewShot render ho jayega
+      setTimeout(async () => {
+        try {
+          if (viewShotRef.current) {
+            console.log('✅ Capturing ViewShot...');
+            
+            const uri = await viewShotRef.current.capture();
+            console.log('✅ Capture success:', uri);
+
+            await Share.open({
+              url: uri,
+              type: 'image/png',
+              failOnCancel: false,
+            });
+
+          } else {
+            console.log('❌ ViewShot ref not available');
+            Alert.alert('Error', 'Failed to capture template');
+          }
+        } catch (error) {
+          console.log('❌ Capture error:', error);
+          Alert.alert('Error', 'Failed to share QR code');
+        } finally {
+         setLocalLoading(false);
+          
+          // Clear data ke baad
+          setTimeout(() => {
+            setTempShopData(null);
+            setTempQR(null);
+          }, 300);
+        }
+      }, 300); // Inner timeout - 1 second
+      
+    }, 300); // Outer timeout - 2 seconds (logo + QR download ke liye)
+
+  } catch (error) {
+    setLoadingQR(false);
+    console.log('Error:', error);
+    Alert.alert('Error', 'Something went wrong');
+  }
+};
+
+    // navigation.navigate(NavigationStrings.QR_Template)
+  
+  
   const handleSearch = text => {
     setSearchText(text);
 
@@ -136,6 +269,23 @@ const Home = () => {
 
   return (
 <>
+ <View 
+  style={{ 
+    position: 'absolute', 
+    left: wp(-200),      // Screen se dur
+    top: hp(-200),
+    opacity: 0,          // Dikhayi na de
+    zIndex: -999,
+  }} 
+  pointerEvents="none"
+  collapsable={false}
+>
+  <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1.0 }}>
+    {tempShopData && tempQR && (
+      <QR_Template shopData={tempShopData} qrBase64={tempQR} />
+    )}
+  </ViewShot>
+</View>
     {
       userShops.length > 0 ? (
         <View style={styles.container}>
