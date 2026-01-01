@@ -1,17 +1,20 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View,ActivityIndicator } from "react-native";
 import React from "react";
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from "../Theme/FontFamily";
 
-const FullwidthButton = ({ title, onPress, borderOnly = false }) => {
+const FullwidthButton = ({ title, onPress, borderOnly = false,isloading,formupdate }) => {
     return (
       <TouchableOpacity
         onPress={onPress}
-        activeOpacity={0.7}
+        disabled={formupdate ? true :false}
+        
+        activeOpacity={ formupdate ? 0.1 :0.7}
         style={[
           styles.button,
           borderOnly && styles.borderButton, // border only style
+          {backgroundColor: formupdate ? COLORS.orange10 : COLORS.orange }
         ]}
       >
         <Text
@@ -20,6 +23,7 @@ const FullwidthButton = ({ title, onPress, borderOnly = false }) => {
             borderOnly && styles.borderText,
           ]}
         >
+          
           {title}
         </Text>
       </TouchableOpacity>

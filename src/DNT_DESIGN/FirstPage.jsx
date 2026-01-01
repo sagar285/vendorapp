@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { COLORS } from "../Theme/Colors"
 import { wp,hp } from "../Theme/Dimensions";
@@ -12,10 +12,22 @@ const FirstPage = () => {
   const {user} =useAppContext()
 
 
-  if(user){
-    navigation.navigate(NavigationStrings.DNT_VENDORREGISTER)
-    return;
-  }
+
+
+
+
+
+
+  // useEffect(()=>{
+  //   if(user && user.role  == "user"){
+  //     navigation.navigate(NavigationStrings.DNT_VENDORREGISTER)
+  //     return;
+  //   }
+  //   if(user && user.role  == "vendor"){
+  //     navigation.navigate(NavigationStrings.BottomTab)
+  //     return;
+  //   }
+  // },[])
 
   const goToLogin = () =>{
     navigation.navigate(NavigationStrings.DNT_LOGIN)

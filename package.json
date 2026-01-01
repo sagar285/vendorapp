@@ -10,9 +10,11 @@
     "test": "jest"
   },
   "dependencies": {
+    "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-camera-roll/camera-roll": "^7.10.2",
-    "@react-native-vector-icons/material-icons": "^12.4.0",
+    "@react-native-firebase/app": "^23.7.0",
+    "@react-native-firebase/messaging": "^23.7.0",
     "@react-native/new-app-screen": "0.82.1",
     "@react-navigation/bottom-tabs": "^7.8.5",
     "@react-navigation/native": "^7.1.20",
@@ -28,8 +30,7 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.18.0",
     "react-native-share": "^12.2.1",
-    "react-native-svg": "^15.15.1",
-    "react-native-vector-icons": "^10.3.0"
+    "react-native-svg": "^15.15.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -53,5 +54,6 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "packageManager": "yarn@4.5.1+sha512.341db9396b6e289fecc30cd7ab3af65060e05ebff4b3b47547b278b9e67b08f485ecd8c79006b405446262142c7a38154445ef7f17c1d5d1de7d90bf9ce7054d"
 }

@@ -1,17 +1,118 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import Route from "./src/Navigations/Route"
-import {AppProvider} from "./src/Context/AppContext"
-const App = () => {
-  return (
-    <AppProvider>
-    <Route/>
-    </AppProvider>
-  )
+import React, { useEffect } from "react";
+import { Platform, StyleSheet } from "react-native";
+import Route from "./src/Navigations/RootNavigator";
+import { AppProvider } from "./src/Context/AppContext";
+
+import messaging from "@react-native-firebase/messaging";
+import notifee, { AndroidImportance } from "@notifee/react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+/* 🔔 CREATE SINGLE ORDER CHANNEL */
+async function createOrderChannel() {
+  if (Platform.OS === "android") {
+    await notifee.createChannel({
+      id: "order_channel",
+      name: "Order Notifications",
+      importance: AndroidImportance.HIGH,
+      sound: "ringtone", // 🔊 android/app/src/main/res/raw/ringtone.mp3
+      vibration: true,
+    });
+  }
 }
 
-export default App
+/* 🔔 SHOW NOTIFICATION */
+async function showOrderNotification(remoteMessage) {
+  const title =
+    remoteMessage?.data?.title ||
+    remoteMessage?.notification?.title ||
+    "New Order";
 
-const styles = StyleSheet.create({
+  const body =
+    remoteMessage?.data?.body ||
+    remoteMessage?.notification?.body ||
+    "You have a new order";
 
-})
+  await notifee.displayNotification({
+    title,
+    body,
+    android: {
+      channelId: "order_channel",
+      importance: AndroidImportance.HIGH,
+      sound: "ringtone",
+      pressAction: { id: "default" },
+    },
+  });
+}
+
+/* 🟣 BACKGROUND / KILLED HANDLER (OUTSIDE COMPONENT) */
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log("📩 Background message:", remoteMessage);
+  await createOrderChannel();
+  await showOrderNotification(remoteMessage);
+});
+
+const App = () => {
+  /* 🔐 PERMISSIONS */
+  const requestPermissions = async () => {
+    await notifee.requestPermission();
+    await messaging().requestPermission();
+  };
+
+  /* 🔑 GET FCM TOKEN */
+  const getFcmToken = async () => {
+    const token = await messaging().getToken();
+    console.log("🔥 FCM TOKEN:", token);
+    await AsyncStorage.setItem("fcm_token", token);
+  };
+
+  /* 🟢 FOREGROUND HANDLER */
+  const listenForeground = () => {
+    return messaging().onMessage(async remoteMessage => {
+      console.log("📩 Foreground message:", remoteMessage);
+      await showOrderNotification(remoteMessage);
+    });
+  };
+
+  /* ⚫ KILLED STATE TAP HANDLER */
+  const handleKilledState = async () => {
+    const initialNotification =
+      await messaging().getInitialNotification();
+
+    if (initialNotification) {
+      console.log(
+        "📩 Opened from killed state:",
+        initialNotification
+      );
+      // yahan navigation laga sakte ho
+    }
+  };
+
+  /* 🚀 INIT */
+  useEffect(() => {
+    let unsubscribe;
+
+    const init = async () => {
+      await createOrderChannel();
+      await requestPermissions();
+      await getFcmToken();
+      unsubscribe = listenForeground();
+      await handleKilledState();
+    };
+
+    init();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  return (
+    <AppProvider>
+      <Route />
+    </AppProvider>
+  );
+};
+
+export default App;
+
+const styles = StyleSheet.create({});

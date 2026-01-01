@@ -9,286 +9,371 @@ import {
   ActivityIndicator,
   Image,
   PermissionsAndroid,
-} from "react-native";
-import React, { useState,useEffect } from "react";
-import Header from "../Components/Header/Header";
-import Input from "../Components/Input";
-import FullwidthButton from "../Components/FullwidthButton";
-import { COLORS } from "../Theme/Colors";
-import { wp, hp } from "../Theme/Dimensions";
-import { FONTS } from "../Theme/FontFamily";
-import { useNavigation } from "@react-navigation/native";
-import NavigationStrings from "../Navigations/NavigationStrings";
-import { useAppContext } from "../Context/AppContext";
-import { apiGet, apiPost } from "../Api/Api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Geolocation from "react-native-geolocation-service";
+  BackHandler,
+  Alert,
+} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { useRef } from 'react';
+import Input from '../Components/Input';
+import FullwidthButton from '../Components/FullwidthButton';
+import { COLORS } from '../Theme/Colors';
+import { wp, hp } from '../Theme/Dimensions';
+import { FONTS } from '../Theme/FontFamily';
+import { useNavigation } from '@react-navigation/native';
+import NavigationStrings from '../Navigations/NavigationStrings';
+import { useAppContext } from '../Context/AppContext';
+import { apiGet, apiPost } from '../Api/Api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Geolocation from 'react-native-geolocation-service';
+
 const VendorRegister = () => {
   const navigation = useNavigation();
-  const { user } = useAppContext();
-  const [addressLine1, setAddressLine1] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [numberOfShops, setNumberOfShops] = useState("");
+  const { user, setUser } = useAppContext();
+  const hasNavigated = useRef(false);
+  const [addressLine1, setAddressLine1] = useState('');
+  const [addressLine2, setAddressLine2] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [numberOfShops, setNumberOfShops] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [pendingRequest, setPendingRequest] = useState(false);
-   const [userShops, setUserShops] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [lat,setlat] =useState(null)
+  const [long,setlong]=useState(null)
+  /* ---------------- getuserProfile ---------------- */
+  const getuserProfile = async () => {
+    try {
+      const result = await apiGet('/user/profile');
+      console.log(result, 'any response');
+      if (result?.user) {
+        console.log('kya andar aa rhi ahi');
 
-  const requestLocationPermission = async () => {
-  if (Platform.OS === "android") {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        // await AsyncStorage.setItem('userdata', JSON.stringify(result.user));
+        //
+        if (result?.user.role == 'vendor') {
+          await AsyncStorage.clear();
+          navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: NavigationStrings.DNT_LOGIN,
+              },
+            ],
+          });
+          setUser(null);
+        }
+      }
+    } catch (error) {
+      console.log('Profile error:', error);
+    }
+  };
+
+  /* ---------------- getUserRequest ---------------- */
+  const getUserRequest = async () => {
+    try {
+      const result = await apiGet('/admin/vendor_request');
+
+      if (result?.result?.status === 'PENDING') {
+        hasNavigated.current = true;
+        navigation.replace(NavigationStrings.DNT_VerifyingDetails);
+      }
+    } catch (error) {
+      console.log('Request error:', error);
+    }
+  };
+
+  /* ---------------- BACK HANDLER ---------------- */
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert('Exit App', 'Kya aap app band karna chahte ho?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Yes', onPress: () => BackHandler.exitApp() },
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
     );
-    return granted === PermissionsAndroid.RESULTS.GRANTED;
-  }
-  return true;
-};
 
-const getCurrentLocation = async () => {
-  const hasPermission = await requestLocationPermission();
+    return () => backHandler.remove();
+  }, []);
 
-  if (!hasPermission) {
-    console.log("Location permission denied");
-    return;
-  }
+  console.log(user, 'user');
 
-  Geolocation.getCurrentPosition(
-    (position) => {
-      const { latitude, longitude } = position.coords;
+  /* ---------------- USE EFFECT HANDLING NAVIGATION ---------------- */
 
-      console.log("LAT:", latitude);
-      console.log("LNG:", longitude);
+  useEffect(() => {
+    // 🔒 Already navigated → stop
+    if (hasNavigated.current) return;
 
-      reverseGeocodeOSM(latitude, longitude);
-    },
-    (error) => {
-      console.log("Location Error:", error);
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 10000,
+    // 🔹 User not loaded yet → fetch once
+    if (user) {
+      getuserProfile();
+      // return;
     }
-  );
-};
 
+    // 🔹 USER → check vendor request
+    if (user.role === 'user') {
+      getUserRequest();
+    }
 
-const reverseGeocodeOSM = async (lat, lng) => {
-  try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    // 🔹 VENDOR → go dashboard
+    if (user.role === 'vendor') {
+      hasNavigated.current = true;
+      navigation.replace(NavigationStrings.BottomTab);
+    }
+  }, [user]);
 
-    const res = await fetch(url, {
-      headers: {
-        "Accept": "application/json",
-        "User-Agent": "VendorApp/1.0 (contact@yourapp.com)",
+  /* ---------------- LOCATION ---------------- */
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  };
+
+  const getCurrentLocation = async () => {
+    setGettingLocation(true);
+
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      setGettingLocation(false);
+      return;
+    }
+
+    Geolocation.getCurrentPosition(
+      position => {
+        const { latitude, longitude } = position.coords;
+        setlat(latitude)
+        setlong(longitude)
+        reverseGeocodeOSM(latitude, longitude);
       },
-    });
+      error => {
+        console.log('Location Error:', error);
+        setGettingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000,
+      },
+    );
+  };
 
-    const text = await res.text();
+  const reverseGeocodeOSM = async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+        {
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': 'VendorApp/1.0',
+          },
+        },
+      );
 
-    if (!text.startsWith("{")) {
-      console.log("Non-JSON response:", text);
-      return;
+      const data = await res.json();
+
+      const fullAddress = data.display_name || '';
+      const parts = fullAddress.split(',').map(i => i.trim());
+
+      setAddressLine1(parts.slice(0, 2).join(', '));
+      setAddressLine2(parts.slice(2).join(', '));
+    } catch (e) {
+      console.log('Reverse Geocode Error:', e);
+    } finally {
+      setGettingLocation(false);
     }
+  };
 
-    const data = JSON.parse(text);
-
-    const fullAddress = data.display_name || "";
-    const parts = fullAddress.split(",").map(item => item.trim());
-
-    const line1 = parts.slice(0, 2).join(", ");
-    const line2 = parts.slice(2).join(", ");
-
-    console.log("ADDRESS LINE 1:", line1);
-    console.log("ADDRESS LINE 2:", line2);
-
-    setAddressLine1(line1);
-    setAddressLine2(line2);
-
-  } catch (error) {
-    console.log("Reverse Geocode Error:", error);
-  }
-};
-
-
-   const getdatauserid = async () => {
-    let userId;
-    const userInfo = await AsyncStorage.getItem("userdata");
-    if (userInfo) {
-      userId = JSON.parse(userInfo)?._id;
-    }
-    console.log(userId,"userid dekh ayiii hai kya eske passsssssssssss")
-   }
-
-
-
-   
+  /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async () => {
-    if (
-      !addressLine1 ||
-      !addressLine2 ||
-      !phoneNumber ||
-      !whatsappNumber ||
-      !numberOfShops
-    ) {
-      setErrorMsg("All fields are required");
-      return;
-    }
+    if (!addressLine1)
+      return setErrors({ addressLine1: 'Address Line 1 is required' });
 
-    
+    if (!addressLine2)
+      return setErrors({ addressLine2: 'Address Line 2 is required' });
+
+    if (!phoneNumber)
+      return setErrors({ phoneNumber: 'Phone number is required' });
+
+    if (!whatsappNumber)
+      return setErrors({ whatsappNumber: 'WhatsApp number is required' });
+
+    if (!numberOfShops)
+      return setErrors({ numberOfShops: 'Number of shops is required' });
+
     try {
       setLoading(true);
-      setErrorMsg("");
+      setErrors({});
 
       const payload = {
         fullName: user?.name,
         gmail: user?.email,
-        address: `${addressLine1} ${addressLine2}`,
+        address:{
+          addressLine:addressLine1 + addressLine2,
+          lat:lat,
+          lon:long
+        },
         phoneNo: phoneNumber,
         whatsappNo: whatsappNumber,
-        numberOfShops: numberOfShops,
-        // userId: userId,
+        numberOfShops,
       };
 
-      const res = await apiPost("/admin/vendor_request", payload);
-       console.log(res,"ye register hua hai user")
+      console.log(payload, 'payload');
+
+      const res = await apiPost('/admin/vendor_request', payload);
+      console.log(res, 'uususuus');
       if (res?.success) {
         navigation.replace(NavigationStrings.DNT_VerifyingDetails);
-      } else {
-        setErrorMsg("Failed to submit request");
       }
-    } catch (error) {
-      setErrorMsg(error?.message || "Something went wrong");
+    } catch (e) {
+      Alert.alert('Error', 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
-    
-  
-     const getUserRequest = async () => {
-        const result = await apiGet("/admin/vendor_request");
-        console.log(result,"usussususususu")
-        if (result.message == "user vedor request succesfully") {
-          const request = result.result;
-          console.log(request == 'null',"request",request == null)
-          if (request?.status == "PENDING" && request !='null') {
-          return navigation.navigate( NavigationStrings.DNT_VerifyingDetails)
-          }
-          if (request == null) {
-          return navigation.navigate( NavigationStrings.BottomTab)
-          } 
-        }
-      };
-  
-  
-        const getShops = async () => {
-          try {
-            const result = await apiGet('/vendor/shop/get');
-            if (result.message === 'user shop get succed') {
-              setUserShops(result.data);
-              if(result.data.length > 0){
-                navigation.navigate( NavigationStrings.DNT_Home)
-              }
-            }
-          } catch (error) {
-            if (error.message === 'Not have valid role') {
-              setopenform(true);
-            }
-          }
-        };
-  
-   useEffect(() => {
-      getUserRequest();
-      // getShops();
-    }, []);
+  useEffect(() => {
+    if (user) {
+      getuserProfile();
+      return;
+    }
 
+    // 🔹 Normal user → check vendor request
+    if (user.role === 'user') {
+      getUserRequest();
+    }
+
+    // 🔹 Already vendor → go to dashboard
+    if (user.role === 'vendor') {
+      navigation.replace(NavigationStrings.BottomTab);
+    }
+  }, []);
+
+  const onLogout = async () => {
+    await AsyncStorage.clear();
+    setUser(null)
+  };
+
+  /* ---------------- UI ---------------- */
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.container}>
         <ScrollView
-          contentContainerStyle={{ paddingBottom: hp(20) }}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: hp(18) }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.headerSpacing}>
-            <Header />
+          <View style={styles.headerRow}>
+            {/* Left: Title + Description */}
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Register to become a vendor</Text>
+              <Text style={styles.description}>
+                Enter your details, so we can verify & approve
+              </Text>
+            </View>
+
+            {/* Right: Logout */}
+            <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Register to become a vendor.</Text>
-            <Text style={styles.description}>
-              Enter your details, so we can verify & approve
-            </Text>
-          </View>
-
-          <TouchableOpacity onPress={getCurrentLocation} style={styles.iconButton}>
-            <Image
-              source={require("../assets/images/Location.png")}
-              style={styles.locationIcon}
-            />
-            <Text style={styles.fetchText}>Fetch Location</Text>
+          <TouchableOpacity
+            onPress={getCurrentLocation}
+            style={styles.iconButton}
+          >
+            {gettingLocation ? (
+              <ActivityIndicator />
+            ) : (
+              <>
+                <Image
+                  source={require('../assets/images/Location.png')}
+                  style={styles.locationIcon}
+                />
+                <Text style={styles.fetchText}>Fetch Location</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <View style={styles.InputGap}>
             <Input
               label="Address Line 1 *"
-              placeholder="123, XYZ Residency, Somewhere, City"
               value={addressLine1}
-              onChangeText={setAddressLine1}
+              onChangeText={t => {
+                setAddressLine1(t);
+                setErrors(prev => ({ ...prev, addressLine1: null }));
+              }}
             />
+            {errors.addressLine1 && (
+              <Text style={styles.errorText}>{errors.addressLine1}</Text>
+            )}
 
             <Input
               label="Address Line 2"
-              placeholder="Apartment, landmark, etc"
               value={addressLine2}
-              onChangeText={setAddressLine2}
+              onChangeText={t => {
+                setAddressLine2(t);
+                setErrors(prev => ({ ...prev, addressLine2: null }));
+              }}
             />
+            {errors.addressLine2 && (
+              <Text style={styles.errorText}>{errors.addressLine2}</Text>
+            )}
 
             <Input
               label="Phone Number"
-              placeholder="+91 - 9876543210"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
               keyboardType="phone-pad"
+              value={phoneNumber}
+              onChangeText={t => {
+                setPhoneNumber(t);
+                setErrors(prev => ({ ...prev, phoneNumber: null }));
+              }}
             />
+            {errors.phoneNumber && (
+              <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+            )}
 
             <Input
               label="Whatsapp Number"
-              placeholder="+91 - 9876543210"
-              value={whatsappNumber}
-              onChangeText={setWhatsappNumber}
               keyboardType="phone-pad"
+              value={whatsappNumber}
+              onChangeText={t => {
+                setWhatsappNumber(t);
+                setErrors(prev => ({ ...prev, whatsappNumber: null }));
+              }}
             />
+            {errors.whatsappNumber && (
+              <Text style={styles.errorText}>{errors.whatsappNumber}</Text>
+            )}
 
             <Input
-              label="How many shops do you want to register with?"
-              placeholder="Enter Number"
-              value={numberOfShops}
-              onChangeText={setNumberOfShops}
+              label="Number of shops"
               keyboardType="numeric"
+              value={numberOfShops}
+              onChangeText={t => {
+                setNumberOfShops(t);
+                setErrors(prev => ({ ...prev, numberOfShops: null }));
+              }}
             />
-
-            {errorMsg ? (
-              <Text style={styles.errorText}>{errorMsg}</Text>
-            ) : null}
+            {errors.numberOfShops && (
+              <Text style={styles.errorText}>{errors.numberOfShops}</Text>
+            )}
           </View>
         </ScrollView>
 
         <View style={styles.bottomButton}>
           <FullwidthButton
-            title={
-              loading ? (
-                <ActivityIndicator color={COLORS.white} />
-              ) : (
-                "Submit"
-              )
-            }
+            title={loading ? <ActivityIndicator color="#fff" /> : 'Submit'}
             onPress={handleSubmit}
             disabled={loading}
           />
@@ -311,14 +396,21 @@ const styles = StyleSheet.create({
     marginTop: hp(2),
   },
 
-  titleContainer: {
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: hp(3),
     marginBottom: hp(2),
   },
 
+  titleContainer: {
+    flex: 1, // important so text wraps properly
+  },
+
   title: {
     fontFamily: FONTS.InterBold,
-    fontSize: wp(5),
+    fontSize: wp(4.4),
     color: COLORS.BlackText,
   },
 
@@ -328,11 +420,22 @@ const styles = StyleSheet.create({
     color: COLORS.grayText,
     marginTop: hp(1),
   },
+  logoutButton:{
+   backgroundColor:COLORS.orange,
+   paddingVertical:wp(2),
+   paddingHorizontal:wp(1.5),
+   borderRadius:wp(2)
+  },
+  logoutText: {
+    fontFamily: FONTS.InterMedium,
+    fontSize: wp(3.8),
+    color: COLORS.white, // ya red if logout destructive
+  },
 
   iconButton: {
-    alignSelf: "flex-end",
-    flexDirection: "row",
-    alignItems: "center",
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.LocationBuleColor10,
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.7),
@@ -343,7 +446,7 @@ const styles = StyleSheet.create({
   locationIcon: {
     width: wp(4),
     height: wp(4),
-    resizeMode: "contain",
+    resizeMode: 'contain',
     tintColor: COLORS.LocationBuleColor,
     marginRight: wp(1),
   },
@@ -359,7 +462,7 @@ const styles = StyleSheet.create({
   },
 
   errorText: {
-    color: "red",
+    color: 'red',
     fontFamily: FONTS.InterRegular,
     fontSize: wp(3.4),
     marginTop: hp(1),
@@ -368,6 +471,6 @@ const styles = StyleSheet.create({
   bottomButton: {
     bottom: hp(3),
     width: wp(90),
-    alignSelf: "center",
+    alignSelf: 'center',
   },
 });

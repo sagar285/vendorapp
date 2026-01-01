@@ -183,7 +183,7 @@ const [newCatName, setNewCatName] = useState('');
             />
             {/* onPress={()=>navigation.navigate(NavigationStrings.DNT_CategoryMenu)} */}
           </View>
-           <FullwidthButton title="Submit"    onPress={addCategory} />
+           <FullwidthButton title="Submit"  isloading = {addCategoryLoaidng}   onPress={addCategory} />
         </View>
       </Animated.View>
     </Modal>

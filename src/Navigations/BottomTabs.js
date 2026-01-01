@@ -8,22 +8,31 @@ import { wp, hp } from "../Theme/Dimensions";
 import HomeStack from "./HomeStack"
 import UserProfile from "../DNT_DESIGN/UserProfile"
 import ProfileStack from "../Navigations/ProfileStack"
+import OrderStack from "../Navigations/OrderStack"
 import Order from "../DNT_DESIGN/Order"
+import { useAppContext } from "../Context/AppContext";
 const Tab = createBottomTabNavigator();
 
 const TabItem = ({ focused, label, icon, isProfile = false }) => {
+  const {user} =useAppContext()
+
+  console.log(user,"usersssss")
   return (
     <View style={[
       styles.tabItemContainer, 
       focused && styles.activeTabContainer
     ]}>
+      
+       
       <Image
-        source={icon}
-        style={[
-          isProfile ? styles.iconProfile : styles.icon,
-          !isProfile && { tintColor: focused ? COLORS.orange : COLORS.grayText } 
-        ]}
-      />
+      source={icon}
+      style={[
+        isProfile ? styles.iconProfile : styles.icon,
+        !isProfile && { tintColor: focused ? COLORS.orange : COLORS.grayText } 
+      ]}
+    />
+      
+     
       <Text 
         numberOfLines={1} 
         style={[
@@ -62,7 +71,7 @@ export default function BottomTabs() {
       />
       <Tab.Screen
         name={NavigationString.DNT_Order}
-        component={Screen.DNT_Order}
+        component={OrderStack}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabItem
@@ -74,8 +83,8 @@ export default function BottomTabs() {
         }}
       />
       <Tab.Screen
-        name={NavigationString.addYourshop}
-        component={Screen.AddShop}
+        name={NavigationString.DNT_Support_Request}
+        component={Screen.DNT_Support_Request}
         options={{
           tabBarIcon: ({ focused }) => (
             <TabItem

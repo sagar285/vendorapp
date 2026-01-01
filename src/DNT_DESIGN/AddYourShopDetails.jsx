@@ -16,11 +16,17 @@ import UploadCard from '../Components/UploadCard';
 import NavigationStrings from '../Navigations/NavigationStrings';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { apiPost } from '../Api/Api';
+import { useAppContext } from '../Context/AppContext';
 const AddYourShopDetails = ({ navigation, route }) => {
   const params = route.params;
-  console.log(params, 'params');
+ const { addressLine1, setAddressLine1 } = useAppContext();
   const [shopLogo, setShopLogo] = useState(null);
   const [shopImages, setShopImages] = useState([]);
+  const [errormessage,seterrormessage]=useState(null);
+  const [imaglimit,setimagelimmit] =useState(5);
+  const [formupdate,setformupdate] =useState(false);
+  const [uploadshop,setuploadShop] =useState(false)
+
 
   const pickLogo = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo' });
@@ -30,29 +36,47 @@ const AddYourShopDetails = ({ navigation, route }) => {
     }
   };
 
+  const MAX_IMAGES = 5;
+
   const pickMultipleImages = async () => {
+    const remainingSlots = MAX_IMAGES - shopImages.length;
+  
+    // 🔒 If limit reached, do nothing
+    if (remainingSlots <= 0) {
+      Alert.alert('Limit reached', 'You can upload up to 5 images only.');
+      return;
+    }
+  
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      selectionLimit: 5,
+      selectionLimit: remainingSlots, // 🔥 dynamic
     });
-
+  
     if (!result.didCancel && result.assets?.length > 0) {
-      setShopImages([...shopImages, ...result.assets]);
+      setShopImages(prevImages => {
+        const combinedImages = [...prevImages, ...result.assets];
+        return combinedImages.slice(0, MAX_IMAGES); // 🔒 extra safety
+      });
     }
   };
+  
 
 
 
      const submitShop = async () => {
        
         try {
-    
+          setformupdate(true)
           let formData = new FormData()
     
           formData.append("shopName", params.shopName)
           formData.append("phone", params.phone)
-          formData.append("shopAddress", params.shopAddress)
-    
+          formData.append(
+            "shopAddress",
+        params.shopAddress
+          );
+
+          console.log(formData,"formdata")
           if (shopLogo) {
             formData.append("shopLogo", {
               uri: shopLogo.uri,
@@ -69,7 +93,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
             })
           })
   
-      
+      console.log(formData,"formdataa")
     
           const result = await apiPost(
             "/vendor/shop/create",
@@ -77,17 +101,27 @@ const AddYourShopDetails = ({ navigation, route }) => {
             {},
             true // <-- multipart mode
           );
+
+          console.log("shop addresss",result)
+          if(!result.success){
+            seterrormessage(result.message)
+            setformupdate(false)
+          }
           if(result?.message == "Shop created successfully"){
   navigation.navigate(NavigationStrings.DNT_SuccesFull)
+  setformupdate(false)
           }
           else{
-            Alert.alert("Error in shop creating")
+            Alert.alert(result?.message)
+            setformupdate(false)
           }
           console.log(result,"apiPost result");
            // true = multipart
          
         } catch (error) {
           console.log(error, "Error in submit shop")
+          Alert.alert(error?.message)
+          setformupdate(false)
         }
       }
 
@@ -105,7 +139,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
             resizeMode="contain"
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Setup your shop</Text>
+        <Text style={styles.headerTitle}>Manage Shop</Text>
         <View style={styles.emptyView} />
       </View>
 
@@ -158,8 +192,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Please Upload Pictures</Text>
           <Text style={styles.sectionSubTitle}>
-            upto 5 pictures of your shop and a logo you{'\n'} use for your
-            business.
+          Upload up to 5 photos of your shop and your business logo.
           </Text>
         </View>
 
@@ -196,10 +229,11 @@ const AddYourShopDetails = ({ navigation, route }) => {
       <View style={styles.footer}>
         <FullwidthButton
           title="Submit"
+          formupdate={formupdate}
           onPress={() => {
             submitShop()
           }}
-          style={{ backgroundColor: '#C4C4C4' }}
+          // style={{ backgroundColor: '#C4C4C4' }}
         />
       </View>
     </View>

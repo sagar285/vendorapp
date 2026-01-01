@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity,Alert } from 'react-native';
 import React from 'react';
 import { COLORS } from '../../Theme/Colors';
 import { wp, hp } from '../../Theme/Dimensions';
@@ -6,13 +6,35 @@ import { FONTS } from '../../Theme/FontFamily';
 import ImageScrollView from '../ImageScrollerContainer/ImageScrollView';
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../../Navigations/NavigationStrings';
-import { BACKEND_URL } from '../../Api/Api';
-const ShopCard = ({ shop, onViewShop, onShareQR }) => {
+import { apiDelete, BACKEND_URL } from '../../Api/Api';
+const ShopCard = ({ shop, onViewShop, onShareQR,getusershops }) => {
   console.log(shop, 'shop');
   const navigation = useNavigation();
   //  const logoUrl = shop.shopLogo
   //               ? `${BACKEND_URL.replace('/api', '')}/${shop.shopLogo.replace(/\\/g, '/')}`
   //               : null;
+
+
+    const deleteItems = itemId => {
+      Alert.alert('Delete Shop', 'Are you sure?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiDelete(`/vendor/shop/deleteSpecificshop/${itemId}`);
+              // setItems(prev => prev.filter(i => i._id !== itemId));
+              getusershops()
+            } catch (error) {
+              console.log(error);
+            }
+          },
+        },
+      ]);
+    };
+
+
   return (
     <View style={styles.cardContainer}>
       {shop.shopImages.length > 0 && (
@@ -36,7 +58,11 @@ const ShopCard = ({ shop, onViewShop, onShareQR }) => {
                 style={styles.icon}
                 resizeMode="contain"
               />
-              <Text style={styles.detailText}>{shop?.shopAddress}</Text>
+              <Text style={styles.detailText}>
+                {shop?.shopAddress?.addressLine?.length > 9
+                  ? shop.shopAddress?.addressLine?.slice(0, 9) + '..'
+                  : shop?.shopAddress?.addressLine}
+              </Text>
             </View>
 
             <View style={styles.detailItem}>
@@ -69,6 +95,14 @@ const ShopCard = ({ shop, onViewShop, onShareQR }) => {
         >
           <Text style={styles.shareButtonText}>Share QR Code</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity onPress={()=>deleteItems(shop._id)} style={styles.DeleteButton}>
+              <Image
+                source={require('../../assets/images/Delete.png')}
+                style={styles.deleteIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
       </View>
     </View>
   );
@@ -85,6 +119,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+  },
+  DeleteButton:{
+     marginTop:wp(2),
+     backgroundColor:COLORS.orange10,
+     borderRadius:wp(10),
+     width:wp(10),
+     height:wp(10),
+     justifyContent:"center",
+  },
+  deleteIcon:{
+   width:wp(8),
+   height:wp(8),
+   alignSelf:"center"
   },
   infoContainer: {
     paddingHorizontal: wp(4),
@@ -128,6 +175,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.orange,
     borderRadius: wp(2),
     paddingVertical: hp(1.5),
+    maxWidth:wp(35),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -141,6 +189,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.Blue,
     borderRadius: wp(2),
+    maxWidth:wp(35),
     paddingVertical: hp(1.5),
     alignItems: 'center',
     justifyContent: 'center',

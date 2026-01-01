@@ -1,252 +1,363 @@
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import FullwidthButton from '../Components/FullwidthButton';
-import { COLORS } from "../Theme/Colors";
-import { wp, hp } from "../Theme/Dimensions";
+import { COLORS } from '../Theme/Colors';
+import { wp, hp } from '../Theme/Dimensions';
 import { FONTS } from '../Theme/FontFamily';
-import ImageScrollView from "../Components/ImageScrollerContainer/ImageScrollerWithoutDot";
 import NavigationStrings from '../Navigations/NavigationStrings';
 import { apiGet } from '../Api/Api';
+import ImageScrollView from '../Components/ImageScrollerContainer/ImageScrollerWithoutDot';
+import { useFocusEffect } from '@react-navigation/native';
+import ImageModal from "../Components/ViewImageModal/ImageModal";
+
+
 
 const ViewShop = ({ navigation, route }) => {
-  const paramsshop = route.params.shop;
-  const shop =  {
-    name: "Shop Name #1",
-    location: "1234, very very long field of address,",
-    location1: " then next line is also little length of,",
-    location2: "the shop's location,",
-    phone: "+91 - 9999999999",
-    createdOn: "10 Dec 2025",
-    modifiedOn: "10 Dec 2025",
-    totalCategories: 13,
-    totalMenuItems: 71,
-    images: [
-      require("../assets/images/img.png"),
-      require("../assets/images/img.png"),
-      require("../assets/images/img.png"),
-    ],
-    qrCode: require("../assets/images/QR.png"),
-    categories: ["Category Name #1", "Category Name #2", "Category Name #3"],
-    menuItems: ["Menu Name #1", "Menu Name #2", "Menu Name #3"],
-  };
-
+  const paramsshop = route?.params?.shop;
+  const [shopDetail, setShopDetail] = useState(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showAllMenuItems, setShowAllMenuItems] = useState(false);
   const [loadingQR, setLoadingQR] = useState(false);
   const [qrImageBase64, setQrImageBase64] = useState(null);
+  const [imageModalVsible,setimageModalvisible] =useState(false);
 
-    const getImageUrl = (path) => {
-      const clean = path.replace(/\\/g, "/");
-      return `${BACKEND_URL.replace("/api", "")}/${clean}`;
+  console.log(paramsshop,"paramsshop")
+
+  /* -------------------------------- FORMAT DATA -------------------------------- */
+
+  const formatShopDetails = apiData => {
+    const shop = apiData?.shop;
+    const categories = apiData?.categories || [];
+
+    const addressParts = shop?.shopAddress
+      ? shop.shopAddress?.addressLine?.match(/.{1,30}/g)
+      : [];
+
+    const totalMenuItems = categories.reduce(
+      (sum, cat) => sum + (cat?.items?.length || 0),
+      0,
+    );
+
+    return {
+      id: shop?._id,
+      name: shop?.shopName || '',
+      location: addressParts?.[0] || '',
+      location1: addressParts?.[1] || '',
+      location2: addressParts?.[2] || '',
+      phone: shop?.phone ? `+91 - ${shop.phone}` : '',
+      createdOn: shop?.createdAt ? new Date(shop.createdAt).toDateString() : '',
+      modifiedOn: shop?.updatedAt
+      ? new Date(shop.updatedAt).toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        })
+      : '',
+      totalCategories: categories.length,
+      totalMenuItems,
+      images: shop?.shopImages || [],
+      categories: categories.map(cat => cat?.categoryName).filter(Boolean),
+      menuItems: categories.flatMap(
+        cat => cat?.items?.map(item => item).filter(Boolean) || [],
+      ),
     };
+  };
 
-    const shareQRCode = async () => {
-      try {
-        if (!qrImageBase64) {
-          Alert.alert("Error", "Generate QR first.");
-          return;
-        }
-    
-        const base64Data = qrImageBase64.split("base64,")[1];
-    
-        // Save file using BlobUtil
-        const filePath = RNBlob.fs.dirs.CacheDir + `/qr_${Date.now()}.png`;
-    
-        await RNBlob.fs.writeFile(filePath, base64Data, "base64");
-    
-        console.log("BLOB FILE PATH:", filePath);
-    
-        // Generate content:// URI automatically
-        const contentUri = await RNBlob.fs.stat(filePath).then((info) => info.path);
-    
-        console.log("CONTENT URI:", contentUri);
-    
-        await Share.open({
-          url: "file://" + contentUri,
-          type: "image/png",
-          failOnCancel: false,
-        });
-    
-      } catch (error) {
-        console.log("Share error:", error);
-      }
-    };
 
-    const getQRCode = async () => {
-      try {
-        setLoadingQR(true);
-    
-        const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
-        const base64 = result?.qrImage;
-    
-        if (!base64) {
-          setLoadingQR(false);
-          Alert.alert("Error", "Failed to generate QR code.");
-          return;
-        }
-    
-        // DO NOT manipulate base64 string from backend  
-        setQrImageBase64(base64);
-    
+  const goToNextPage = async() =>{
+    if(shopDetail?.categories?.length == 0 ){
+      navigation.navigate(NavigationStrings.DNT_AddNewCategory, {
+        shopId: paramsshop?._id,
+      })
+    }
+    else{
+      navigation.navigate(NavigationStrings.DNT_CategoryMenu, {
+        shopId: paramsshop?._id,
+      })
+    }
+  }
+
+  /* -------------------------------- API CALL -------------------------------- */
+
+  const getShopDetails = async () => {
+    try {
+      const url = `/vendor/shop/getShopDetail/${paramsshop?._id}`;
+      const result = await apiGet(url);
+      console.log(result,"hhhjjhhjhjhhhhhhjh")
+      const formatted = formatShopDetails(result?.data);
+      setShopDetail(formatted);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load shop details');
+    }
+  };
+
+  const getQRCode = async () => {
+    try {
+      setLoadingQR(true);
+      const result = await apiGet(`/vendor/shop/qr/${paramsshop?._id}`);
+      const base64 = result?.qrImage;
+
+      if (!base64) {
         setLoadingQR(false);
-    
-      } catch (error) {
-        setLoadingQR(false);
-        Alert.alert("Error", "Something went wrong.");
+        Alert.alert('Error', 'Failed to generate QR code.');
+        return;
       }
-    };
+
+      // DO NOT manipulate base64 string from backend
+      setQrImageBase64(base64);
+
+      setLoadingQR(false);
+    } catch (error) {
+      setLoadingQR(false);
+      Alert.alert('Error', 'Something went wrong.');
+    }
+  };
+
+useFocusEffect(useCallback(()=>{
+  if (paramsshop?._id) {
+    getShopDetails(); 
+  }
+},[]))
+
+const onClose = () =>{
+  setimageModalvisible(false);
+}
+
+  /* -------------------------------- UI -------------------------------- */
 
   return (
     <View style={styles.container}>
-      
-      {/* Header */}
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Image
-            source={require("../assets/images/LeftArrow.png")}
+            source={require('../assets/images/LeftArrow.png')}
             style={styles.backIcon}
-            resizeMode="contain"
           />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Setup your shop</Text>
+        <Text style={styles.headerTitle}>Shop Details</Text>
         <View style={styles.emptyView} />
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        
-        {/* Shop Info Section */}
-        <View style={styles.detailsContainer}>
-          
-          {/* Shop Name and QR Code */}
-          <View style={styles.shopHeaderRow}>
-            <View style={styles.shopInfoSection}>
-              <Text style={styles.shopName}>{shop.name}</Text>
-              <Text style={styles.shopMeta}>Created on <Text style={styles.MiniText}>{shop.createdOn}</Text></Text>
-              <Text style={styles.shopMeta}>Modified on <Text style={styles.MiniText}>{shop.modifiedOn}</Text></Text>
-              <Text style={styles.shopMeta}>Total Categories: <Text style={styles.MiniText}>{shop.totalCategories}</Text></Text>
-              <Text style={styles.shopMeta}>Total Menu Items: <Text style={styles.MiniText}>{shop.totalMenuItems}</Text></Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* SHOP DETAILS */}
+        <View style={styles.topSection}>
+          {/* LEFT : SHOP INFO */}
+          <View style={styles.leftInfo}>
+            <Text style={styles.shopName}>{shopDetail?.name}</Text>
+
+            {/* <Text style={styles.shopMeta}>
+              Created on{' '}
+              <Text style={styles.MiniText}>{shopDetail?.createdOn}</Text>
+            </Text> */}
+
+            <Text style={styles.shopMeta}>
+              Modified on{' '}
+              <Text style={styles.MiniText}>{shopDetail?.modifiedOn}</Text>
+            </Text>
+
+            <Text style={styles.shopMeta}>
+              Total Categories:{' '}
+              <Text style={styles.MiniText}>{shopDetail?.totalCategories}</Text>
+            </Text>
+
+            <Text style={styles.shopMeta}>
+              Total Menu Items:{' '}
+              <Text style={styles.MiniText}>{shopDetail?.totalMenuItems}</Text>
+            </Text>
+
+            {/* ADDRESS */}
+            <View style={styles.infoRow}>
+              <Image
+                source={require('../assets/images/LocationPin.png')}
+                style={styles.infoIcon}
+              />
+              <Text style={styles.locationText}>
+                {shopDetail?.location}
+                {'\n'}
+                {shopDetail?.location1}
+                {'\n'}
+                {shopDetail?.location2}
+              </Text>
             </View>
 
-            <Image
-              source={shop.qrCode}
-              style={styles.qrCode}
-              resizeMode="cover"
-            />
+            {/* PHONE */}
+            <View style={styles.infoRow}>
+              <Image
+                source={require('../assets/images/Call.png')}
+                style={styles.infoIcon}
+              />
+              <Text style={styles.phoneText}>{shopDetail?.phone}</Text>
+            </View>
           </View>
 
-          {/* Location */}
-          <View style={styles.infoRowWithIcon}>
-            <Image
-              source={require("../assets/images/LocationPin.png")}
-              style={styles.infoIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.locationText}>{shop.location}{"\n"}{shop.location1} {"\n"} {shop.location2} </Text>
-          </View>
-
-          {/* Phone */}
-          <View style={styles.infoRowWithIcon}>
-            <Image
-              source={require("../assets/images/Call.png")}
-              style={styles.infoIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.phoneText}>{shop.phone}</Text>
-          <TouchableOpacity onPress={getQRCode} style={styles.generateQRButton}>
-            <Text style={styles.generateQRText}>Generate New QR</Text>
-          </TouchableOpacity>
-          </View>
-
-          {/* Generate QR Button */}
-
-        </View>
-
-        {/* Shop Images Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Shop Images</Text>
-          <ImageScrollView images={shop.images} />
-        </View>
-
-        {/* Categories Section */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Categories</Text>
-          </View>
-          <View style={styles.tagsContainer}>
-            {(showAllCategories ? shop.categories : shop?.categories?.slice(0, 3)).map((category, index) => (
-              <>
-              <View key={index} style={styles.tag}>
-                <Text style={styles.tagText}>{category}</Text>
-              </View>
-             
-                </>
-            ))}
+          {/* RIGHT : QR + BUTTON */}
+          <View style={styles.qrSection}>
+            { (
+              <TouchableOpacity
+              onPress={()=>setimageModalvisible(true)}
+              >
              <Image
-                  source={require("../assets/images/Down.png")}
-                  style={styles.moreIcon}
-                  resizeMode="contain"
-                />
-            {shop.categories.length > 3 && (
-              <TouchableOpacity 
+             source={
+               qrImageBase64
+                 ? { uri: qrImageBase64 }
+                 : require('../assets/images/QR.png')
+             }
+             style={styles.qrImage}
+             blurRadius={qrImageBase64 ? 0 : 6}
+           />
+           </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.generateQrButton}
+              onPress={getQRCode}
+              disabled={loadingQR}
+            >
+              <Text style={styles.generateQrText}>
+                {loadingQR ? 'Generating...' : 'Generate QR'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* LOCATION */}
+
+        {/* PHONE */}
+
+        {/* SHOP IMAGES */}
+        {shopDetail?.images?.length > 0 && (
+          <View style={styles.sectionContainer}>
+            {/* <Text style={styles.sectionTitle}>Shop Images</Text> */}
+            <ImageScrollView images={shopDetail?.images} />
+          </View>
+        )}
+
+        {/* CATEGORIES */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Categories</Text>
+          <View style={styles.tagsContainer}>
+            {(showAllCategories
+              ? shopDetail?.categories
+              : shopDetail?.categories?.slice(0, 3)
+            )?.map((cat, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{cat}</Text>
+              </View>
+            ))}
+            {shopDetail?.categories?.length > 3 && (
+              <TouchableOpacity
                 style={styles.moreTag}
                 onPress={() => setShowAllCategories(!showAllCategories)}
               >
                 <Image
-                  source={require("../assets/images/Down.png")}
+                  source={require('../assets/images/Down.png')}
                   style={styles.moreIcon}
-                  resizeMode="contain"
                 />
               </TouchableOpacity>
             )}
           </View>
         </View>
 
-        {/* Menu Items Section */}
+        {/* MENU ITEMS */}
         <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Menu Items</Text>
-          </View>
+          <Text style={styles.sectionTitle}>Menu Items</Text>
           <View style={styles.tagsContainer}>
-            {(showAllMenuItems ? shop.menuItems : shop.menuItems.slice(0, 3)).map((item, index) => (
+            {(showAllMenuItems
+              ? shopDetail?.menuItems
+              : shopDetail?.menuItems?.slice(0, 3)
+            )?.map((item, index) => (
               <View key={index} style={styles.tag}>
                 <Text style={styles.tagText}>{item}</Text>
               </View>
             ))}
-             <Image
-                  source={require("../assets/images/Down.png")}
+            {shopDetail?.menuItems?.length > 3 && (
+              <TouchableOpacity
+                style={styles.moreTag}
+                onPress={() => setShowAllMenuItems(!showAllMenuItems)}
+              >
+                <Image
+                  source={require('../assets/images/Down.png')}
                   style={styles.moreIcon}
-                  resizeMode="contain"
                 />
-
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-
       </ScrollView>
 
-      {/* Footer */}
+      {/* FOOTER */}
       <View style={styles.footer}>
-        <FullwidthButton 
-          title="Manage Shop" 
-          onPress={() => {navigation.navigate(NavigationStrings.DNT_AddNewCategory,{
-            shopId:paramsshop?._id
-          })}}
+        <FullwidthButton
+          title="Manage Shop"
+          onPress={goToNextPage}
+          
         />
       </View>
 
+      <ImageModal 
+      visible = {imageModalVsible}
+      qrImageBase64={qrImageBase64}
+      onClose={onClose}
+      id={shopDetail?.id}
+      />
     </View>
-  )
-}
+  );
+};
 
-export default ViewShop
+export default ViewShop;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
   },
+  topSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: hp(3),
+  },
+  
+  leftInfo: {
+    flex: 1,
+    paddingRight: wp(3),
+  },
+  
+  qrSection: {
+    width: wp(32),
+    alignItems: 'center',
+  },
+  
+  qrImage: {
+    width: wp(32),
+    height: wp(32),
+    backgroundColor: '#fff',
+    borderRadius: wp(2),
+    marginBottom: hp(1.5),
+  },
+  
+  generateQrButton: {
+    backgroundColor: COLORS.orange,
+    width: '90%',
+    paddingVertical: hp(1.2),
+    borderRadius: wp(2),
+  },
+  
+  generateQrText: {
+    color: COLORS.white,
+    fontSize: wp(3.2),
+    fontFamily: FONTS.InterSemiBold,
+    textAlign: 'center',
+  },
+  
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -262,13 +373,13 @@ const styles = StyleSheet.create({
     height: wp(6),
   },
   headerTitle: {
-    fontSize: wp(4), 
+    fontSize: wp(4),
     color: COLORS.BlackText,
     textAlign: 'center',
-    fontFamily: FONTS.InterSemiBold, 
+    fontFamily: FONTS.InterSemiBold,
   },
   emptyView: {
-    width: wp(6), 
+    width: wp(6),
   },
   scrollContent: {
     paddingHorizontal: wp(5),
@@ -284,6 +395,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: hp(2),
   },
+
+  infoRow: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+
   shopInfoSection: {
     flex: 1,
     marginRight: wp(3),
@@ -301,9 +418,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.InterRegular,
     marginBottom: hp(0.3),
   },
-   MiniText:{
-    color:"#000",
-    fontFamily:FONTS.InterSemiBold
+  MiniText: {
+    color: '#000',
+    fontFamily: FONTS.InterSemiBold,
   },
   qrCode: {
     width: wp(28),
@@ -314,8 +431,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: hp(1.5),
-    justifyContent:"center",
-    alignItems:"center"
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   infoIcon: {
     width: wp(5),
@@ -338,7 +455,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   generateQRButton: {
-    backgroundColor:COLORS.orange,
+    backgroundColor: COLORS.orange,
     borderRadius: wp(2.5),
     paddingVertical: hp(1.2),
     paddingHorizontal: wp(1.2),
@@ -369,16 +486,16 @@ const styles = StyleSheet.create({
     gap: wp(1),
   },
   tag: {
-    backgroundColor:COLORS.Blue10,
+    backgroundColor: COLORS.Blue10,
     paddingVertical: hp(0.8),
     borderRadius: wp(5),
     borderWidth: 1,
     borderColor: '#D0E3FF',
-    paddingHorizontal:wp(1)
+    paddingHorizontal: wp(1),
   },
   tagText: {
     fontSize: wp(2.9),
-    color:COLORS.Blue,
+    color: COLORS.Blue,
     fontFamily: FONTS.InterMedium,
     fontWeight: '500',
   },
@@ -395,13 +512,13 @@ const styles = StyleSheet.create({
   moreIcon: {
     width: wp(3.8),
     height: wp(3.8),
-    alignContent:"center",
-    marginTop:hp(0.8),
-    marginLeft:wp(0.5)
+    alignContent: 'center',
+    marginTop: hp(0.8),
+    marginLeft: wp(0.5),
   },
   footer: {
     position: 'absolute',
-    bottom:hp(9),
+    bottom: hp(9),
     left: 0,
     right: 0,
     backgroundColor: COLORS.white,
@@ -409,5 +526,4 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
   },
- 
 });

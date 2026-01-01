@@ -19,19 +19,20 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [ActiveLoader,setActiveLoader] =useState(0)
-
+   const [addressLine1, setAddressLine1] = useState('');
   // ✅ Jo bhi globally share karna ho yahin return karo
   const value = {
     user,
     setUser,
     isLoading,
     setIsLoading,
-    ActiveLoader,setActiveLoader
+    ActiveLoader,setActiveLoader,
+    addressLine1, setAddressLine1
   };
 
   const checkUser = async () =>{
     const getuserfromasyncstorage = await AsyncStorage.getItem("userdata")
-    console.log(getuserfromasyncstorage,"kkkkkkk")
+    console.log(getuserfromasyncstorage,"getuserfromasyncstorage")
     if(getuserfromasyncstorage){
       setUser(JSON.parse(getuserfromasyncstorage))
     }

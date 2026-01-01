@@ -20,10 +20,14 @@ import NavigationStrings from "../Navigations/NavigationStrings";
 import { useAppContext } from "../Context/AppContext";
 import { apiPost } from "../Api/Api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+} from "react-native-safe-area-context";
 
 const Password = () => {
   const navigation = useNavigation();
-  const { setActiveLoader } = useAppContext();
+  const { setActiveLoader,setUser } = useAppContext();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -36,18 +40,22 @@ const Password = () => {
     }, [])
   );
 
+  /* ---------- PASSWORD RULES ---------- */
   const rule1 = password.length >= 8;
   const rule2 = /[!@#$%^&*0-9]/.test(password);
   const rule3 = /[A-Z]/.test(password);
+  const rule4 = password.length > 0 && password === confirm;
 
-  const allValid = rule1 && rule2 && rule3 && password === confirm;
+  const allValid = rule1 && rule2 && rule3 && rule4;
 
   const rules = [
     { label: "Minimum 8 Characters", valid: rule1 },
     { label: "At least one symbol & number", valid: rule2 },
     { label: "Minimum one uppercase letter", valid: rule3 },
+    { label: "Passwords match", valid: rule4 },
   ];
 
+  /* ---------- API ---------- */
   const handleSetPassword = async () => {
     if (!allValid) return;
 
@@ -60,7 +68,8 @@ const Password = () => {
 
       if (result?.token) {
         await AsyncStorage.setItem("token", result.token);
-        navigation.replace(NavigationStrings.DNT_VENDORREGISTER);
+        setUser(result.user)
+        // navigation.replace(NavigationStrings.DNT_VENDORREGISTER);
       } else {
         setErrorMsg("Failed to set password");
       }
@@ -72,104 +81,117 @@ const Password = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <View style={styles.container}>
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: hp(20) }}
-          keyboardShouldPersistTaps="handled"
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? hp(8) : 0}
         >
-          <View style={styles.headerSpacing}>
-            <Header />
-          </View>
+          <View style={styles.container}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: hp(25) }}
+            >
+              {/* ---------- HEADER ---------- */}
+              <View style={styles.headerSpacing}>
+                <Header />
+              </View>
 
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Set Your Password</Text>
-            <Text style={styles.description}>
-              Create a strong password that you can remember
-            </Text>
-          </View>
-
-          <View style={styles.rulesContainer}>
-            {rules.map((item, index) => (
-              <View key={index} style={styles.ruleRow}>
-                <View
-                  style={[
-                    styles.ruleIcon,
-                    {
-                      backgroundColor: item.valid
-                        || COLORS.lightGray,
-                    },
-                  ]}
-                >
-                  {item.valid && (
-                    <Image
-                      source={require("../assets/images/rightCheck.png")}
-                      style={styles.tickIcon}
-                    />
-                  )}
-                </View>
-
-                <Text
-                  style={[
-                    styles.ruleText,
-                    {
-                      color: item.valid
-                        ? COLORS.green
-                        : COLORS.BlackText,
-                    },
-                  ]}
-                >
-                  {item.label}
+              {/* ---------- TITLE ---------- */}
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>Set Your Password</Text>
+                <Text style={styles.description}>
+                  Create a strong password that you can remember
                 </Text>
               </View>
-            ))}
+
+              {/* ---------- RULES ---------- */}
+              <View style={styles.rulesContainer}>
+                {rules.map((item, index) => (
+                  <View key={index} style={styles.ruleRow}>
+                    <View
+                      style={[
+                        styles.ruleIcon,
+                        {
+                          backgroundColor: item.valid
+                            ? COLORS.green
+                            : COLORS.lightGray,
+                        },
+                      ]}
+                    >
+                      {item.valid && (
+                        <Image
+                          source={require("../assets/images/rightCheck.png")}
+                          style={styles.tickIcon}
+                        />
+                      )}
+                    </View>
+
+                    <Text
+                      style={[
+                        styles.ruleText,
+                        {
+                          color: item.valid
+                            ? COLORS.green
+                            : COLORS.BlackText,
+                        },
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* ---------- INPUTS ---------- */}
+              <View style={styles.inputContainer}>
+                <Input
+                  label="New Password"
+                  placeholder="Enter new password"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                />
+
+                <Input
+                  label="Confirm Password"
+                  placeholder="Re-enter password"
+                  secureTextEntry
+                  value={confirm}
+                  onChangeText={setConfirm}
+                />
+              </View>
+
+              {/* ---------- ERRORS ---------- */}
+              {confirm.length > 0 && !rule4 && (
+                <Text style={styles.errorText}>Passwords do not match</Text>
+              )}
+
+              {errorMsg ? (
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              ) : null}
+            </ScrollView>
+
+            {/* ---------- BOTTOM BUTTON ---------- */}
+            <View style={styles.bottomButton}>
+              <FullwidthButton
+                title={
+                  loading ? (
+                    <ActivityIndicator color={COLORS.white} />
+                  ) : (
+                    "Continue"
+                  )
+                }
+                disabled={!allValid || loading}
+                onPress={handleSetPassword}
+              />
+            </View>
           </View>
-
-       <View style={styles.InputContainer} >
-          <Input
-            label="New Password"
-            placeholder="Enter new password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-
-          <Input
-            label="Confirm Password"
-            placeholder="Re-enter password"
-            secureTextEntry
-            value={confirm}
-            onChangeText={setConfirm}
-          />
-       </View>
-
-          {confirm.length > 0 && password !== confirm && (
-            <Text style={styles.errorText}>Passwords do not match</Text>
-          )}
-
-          {errorMsg ? (
-            <Text style={styles.errorText}>{errorMsg}</Text>
-          ) : null}
-        </ScrollView>
-
-        <View style={styles.bottomButton}>
-          <FullwidthButton
-            title={
-              loading ? (
-                <ActivityIndicator color={COLORS.white} />
-              ) : (
-                "Continue"
-              )
-            }
-            disabled={!allValid || loading}
-            onPress={handleSetPassword}
-          />
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 
@@ -203,9 +225,6 @@ const styles = StyleSheet.create({
     color: COLORS.grayText,
     marginTop: hp(1),
   },
-  InputContainer:{
-    marginTop:hp(20)
-  },
 
   rulesContainer: {
     marginVertical: hp(2),
@@ -226,22 +245,26 @@ const styles = StyleSheet.create({
   },
 
   tickIcon: {
-    width: wp(5),
-    height: wp(5),
+    width: wp(4),
+    height: wp(4),
     resizeMode: "contain",
   },
 
   ruleText: {
-    marginLeft: wp(1.5),
+    marginLeft: wp(2),
     fontSize: wp(3.8),
     fontFamily: FONTS.InterRegular,
+  },
+
+  inputContainer: {
+    marginTop: hp(3),
   },
 
   errorText: {
     color: "red",
     fontSize: wp(3.4),
     fontFamily: FONTS.InterRegular,
-    marginVertical: hp(1),
+    marginTop: hp(1),
   },
 
   bottomButton: {
@@ -251,3 +274,4 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 });
+

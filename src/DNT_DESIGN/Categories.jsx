@@ -1,49 +1,155 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, FlatList } from 'react-native';
-import React, { useState } from 'react';
-import { COLORS } from "../Theme/Colors";
-import { wp, hp } from "../Theme/Dimensions";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { COLORS } from '../Theme/Colors';
+import { wp, hp } from '../Theme/Dimensions';
 import { FONTS } from '../Theme/FontFamily';
-import EditAddMenuiIemModal from "../Components/EditAddMenuiIemModal";
+import EditMenuItemModal from '../Components/EditMenuItemModal';
+import { apiDelete, apiGet, BACKEND_URL } from '../Api/Api';
+import EditCtegoryModal from '../Components/EditCtegoryModal';
 
-const CategoryDetails = ({ navigation }) => {
-  const [menuItems, setMenuItems] = useState([
-    { id: 1, name: 'Menu Item Name', price: '499', type: 'Item Type' },
-    { id: 2, name: 'Menu Item Name', price: '499', type: 'Item Type' },
-    { id: 3, name: 'Menu Item Name because it\'s so long', price: '499', type: 'Item Type' },
-    { id: 4, name: 'Menu Item Name', price: '499', type: 'Item Type' },
-    { id: 5, name: 'Menu Item Name', price: '499', type: 'Item Type' },
-  ]);
-   
+const CategoryDetails = ({ navigation, route }) => {
+  const category = route.params.category;
+  const shopId = route.params.shopId;
+  const catId = category._id;
+  // console.log(category,"category")
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [catmodalVisible, setcatModalVisible] = useState(false);
+  const [editItem, seteditItem] = useState(null);
+  const [categoryInfo,setcategoryInfo] =useState(null);
+
+
+
+  const getCategory =async() =>{
+    const result = await apiGet(`/menu/category/getCat/${catId}`);
+    console.log(result,"klddjkjdsfjkdsfjkdsdkjfh")
+    if(result.category){
+      setcategoryInfo(result.category)
+    }
+  }
+
+  useEffect(()=>{
+    getCategory();
+  },[])
+
+  const deleteCategory = async categoryId => {
+    try {
+      await apiDelete(`/menu/category/delete/${catId}`);
+      navigation.goBack();
+    } catch (err) {
+      console.log('Delete category error:', err);
+    }
+  };
+
+  const fetchItems = async () => {
+    try {
+     
+      setLoading(true);
+      const res = await apiGet(`/menu/item/${catId}`);
+      console.log(res, 'res piGet(`/menu/item/${catId}`)');
+      setItems(res?.items || []);
+    } catch (err) {
+      setError('Unable to load items.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onClose = () => {
+    fetchItems();
+    setcatModalVisible(false);
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, [catId]);
+
+  const createAt = new Date(categoryInfo?.createdAt).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+    dateStyle: 'short',
+  });
+  const updatedAt = new Date(categoryInfo?.updatedAt).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+    dateStyle: 'short',
+  });
+
+  const deleteItems = itemId => {
+    Alert.alert('Delete Item', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiDelete(`/menu/item/delete/${itemId}`);
+            setItems(prev => prev.filter(i => i._id !== itemId));
+          } catch (error) {
+            console.log(error);
+          }
+        },
+      },
+    ]);
+  };
+
   const [modalVisible, setModalVisible] = useState(false);
+
+  const openEditModal = item => {
+    seteditItem(item);
+    setModalVisible(true);
+  };
 
   const renderHeader = () => (
     <View>
       <View style={styles.topDetailsContainer}>
         <View style={styles.bigIconContainer}>
           <Image
-            source={require("../assets/images/Category.png")}
+            source={{uri:`${BACKEND_URL}/${categoryInfo?.icon}`}}
             style={styles.bigCategoryIcon}
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </View>
 
         <View style={styles.detailsColumn}>
           <View style={styles.titleRow}>
-             <Text style={styles.detailTitle}>Category Name #1</Text>
-             <TouchableOpacity style={styles.deleteButton}>
-                <Image 
-                  source={require("../assets/images/Delete.png")}
-                  style={styles.deleteIcon}
-                  resizeMode="contain"
-                />
-             </TouchableOpacity>
+            <Text style={styles.detailTitle}>{categoryInfo?.name}</Text>
+            <TouchableOpacity
+              onPress={deleteCategory}
+              style={styles.deleteButton}
+            >
+              <Image
+                source={require('../assets/images/Delete.png')}
+                style={styles.deleteIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
           </View>
-          
-          <Text style={styles.metaText}>Created on <Text style={styles.metaTextBold}>10 Dec 2025</Text></Text>
-          <Text style={styles.metaText}>Modified on <Text style={styles.metaTextBold}>10 Dec 2025</Text></Text>
-          <Text style={styles.metaText}>Total Menu Items : <Text style={styles.metaTextBold}>5</Text></Text>
 
-          <TouchableOpacity onPress={()=>setModalVisible(true)} style={styles.editCategoryBtn}>
+          <Text style={styles.metaText}>
+            Created on <Text style={styles.metaTextBold}>{createAt}</Text>
+          </Text>
+          <Text style={styles.metaText}>
+            Modified on <Text style={styles.metaTextBold}>{updatedAt}</Text>
+          </Text>
+          <Text style={styles.metaText}>
+            Total Menu Items :{' '}
+            <Text style={styles.metaTextBold}>{items?.length}</Text>
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => setcatModalVisible(true)}
+            style={styles.editCategoryBtn}
+          >
             <Text style={styles.editCategoryBtnText}>Edit Category</Text>
           </TouchableOpacity>
         </View>
@@ -57,37 +163,55 @@ const CategoryDetails = ({ navigation }) => {
     <View style={styles.menuItemCard}>
       <View style={styles.menuIconContainer}>
         <Image
-          source={require("../assets/images/Category.png")}
+          source={{ uri: `${BACKEND_URL}/${item.image}` }}
           style={styles.smallMenuIcon}
-          resizeMode="contain"
+          resizeMode="cover"
         />
       </View>
 
       <View style={styles.menuTextContainer}>
-        <Text style={styles.menuItemName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.menuItemName} numberOfLines={2}>
+          {item.name}
+        </Text>
         <View style={styles.priceRow}>
-          <Text style={styles.priceText}>₹{item.price}</Text>
-          <View style={styles.dotSeparator} />
-          <Text style={styles.typeText}>{item.type}</Text>
+          <View>
+            <Text style={styles.offerpriceText}>₹{item?.realprice}</Text>
+            <Text style={styles.priceText}>₹{item?.price}</Text>
+          </View>
+          <View
+            style={[
+              styles.dotSeparator,
+              { backgroundColor: item.type == 'veg' ? 'green' : 'red' },
+            ]}
+          />
+          <Text style={styles.typeText}>
+            {item?.type == 'nonveg' ? 'Non-Veg' : 'Veg'}
+          </Text>
         </View>
       </View>
 
       <View style={styles.actionContainer}>
-        <TouchableOpacity style={styles.pillEditButton} onPress={() => setModalVisible(true)}>
-            <Image
-                source={require("../assets/images/Pen.png")}
-                style={styles.pillIcon}
-                resizeMode="contain"
-            />
-            <Text style={styles.pillEditText}>Edit</Text>
+        <TouchableOpacity
+          style={styles.pillEditButton}
+          onPress={() => openEditModal(item)}
+        >
+          <Image
+            source={require('../assets/images/Pen.png')}
+            style={styles.pillIcon}
+            resizeMode="contain"
+          />
+          <Text style={styles.pillEditText}>Edit</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.moreButton}>
-            <Image
-                source={require("../assets/images/ThreeDot.png")}
-                style={styles.threeDotIcon}
-                resizeMode="contain"
-            />
+
+        <TouchableOpacity
+          onPress={() => deleteItems(item._id)}
+          style={styles.moreButton}
+        >
+          <Image
+            source={require('../assets/images/Delete.png')}
+            style={styles.threeDotIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -96,9 +220,12 @@ const CategoryDetails = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButtonContainer}
+        >
           <Image
-            source={require("../assets/images/LeftArrow.png")}
+            source={require('../assets/images/LeftArrow.png')}
             style={styles.backIcon}
             resizeMode="contain"
           />
@@ -108,18 +235,33 @@ const CategoryDetails = ({ navigation }) => {
       </View>
 
       <FlatList
-        data={menuItems}
+        data={items}
         renderItem={renderMenuItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={item => item._id.toString()}
         ListHeaderComponent={renderHeader}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
       />
 
-      <EditAddMenuiIemModal
+      <EditMenuItemModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        title="Edit Item"
+        item={editItem}
+        shopId={shopId}
+        categoryId={catId}
+        onClose={() => {
+          setModalVisible(false);
+          fetchItems();
+        }}
+      />
+
+      <EditCtegoryModal
+        visible={catmodalVisible}
+        category={categoryInfo}
+        onClose={() => {
+          setcatModalVisible(false);
+          fetchItems();
+          getCategory()
+        }}
       />
     </View>
   );
@@ -156,16 +298,18 @@ const styles = StyleSheet.create({
   bigIconContainer: {
     width: wp(28),
     height: wp(28),
-    backgroundColor: '#F6F8FA', 
+    backgroundColor: '#F6F8FA',
     borderRadius: wp(4),
-    justifyContent: 'center',
+    // justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(4),
   },
   bigCategoryIcon: {
-    width: wp(10),
-    height: wp(10),
-    tintColor: '#202020',
+    width: wp(28),
+    height: wp(28),
+    borderRadius: wp(4),
+    resizeMode:"contain"
+    // tintColor: '#202020',
   },
   detailsColumn: {
     flex: 1,
@@ -184,7 +328,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   deleteButton: {
-    backgroundColor: '#FFEBEE', 
+    backgroundColor: '#FFEBEE',
     padding: wp(1.5),
     borderRadius: wp(100),
     marginLeft: wp(2),
@@ -192,7 +336,7 @@ const styles = StyleSheet.create({
   deleteIcon: {
     width: wp(4),
     height: wp(4),
-    tintColor: '#FF5C40', 
+    tintColor: '#FF5C40',
   },
   metaText: {
     fontSize: wp(3),
@@ -205,12 +349,12 @@ const styles = StyleSheet.create({
     color: '#444',
   },
   editCategoryBtn: {
-    backgroundColor: '#FF5630', 
+    backgroundColor: '#FF5630',
     paddingVertical: hp(1),
     borderRadius: wp(2),
     alignItems: 'center',
     marginTop: hp(1.5),
-    width: '100%', 
+    width: '100%',
   },
   editCategoryBtnText: {
     color: '#FFF',
@@ -236,16 +380,17 @@ const styles = StyleSheet.create({
   menuIconContainer: {
     width: wp(13),
     height: wp(13),
-    backgroundColor: '#F6F8FA',
     borderRadius: wp(3),
+    backgroundColor: '#F6F8FA',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: wp(3.5),
   },
   smallMenuIcon: {
-    width: wp(5.5),
-    height: wp(5.5),
-    tintColor: '#202020',
+    width: wp(13),
+    height: wp(13),
+    borderRadius: wp(3),
+    // tintColor: '#202020',
   },
   menuTextContainer: {
     flex: 1,
@@ -265,12 +410,18 @@ const styles = StyleSheet.create({
     fontSize: wp(3.5),
     color: '#666',
     fontFamily: FONTS.InterMedium,
+    textDecorationLine: 'line-through',
+  },
+  offerpriceText: {
+    fontSize: wp(3.5),
+    color: '#666',
+    fontFamily: FONTS.InterMedium,
   },
   dotSeparator: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#FF5630', 
+    backgroundColor: '#FF5630',
     marginHorizontal: wp(2),
   },
   typeText: {
@@ -283,7 +434,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pillEditButton: {
-    backgroundColor: '#E8F1FF', 
+    backgroundColor: '#E8F1FF',
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.8),
     borderRadius: wp(100),
@@ -295,20 +446,22 @@ const styles = StyleSheet.create({
     width: wp(3),
     height: wp(3),
     marginRight: wp(1.5),
-    tintColor: '#2B7FFF'
+    tintColor: '#2B7FFF',
   },
   pillEditText: {
-    color: '#2B7FFF', 
+    color: '#2B7FFF',
     fontSize: wp(3),
     fontFamily: FONTS.InterMedium,
   },
   moreButton: {
     padding: wp(1),
+    backgroundColor: COLORS.orange10,
+    borderRadius: 100,
   },
   threeDotIcon: {
-    width: wp(1), 
+    width: wp(1),
     height: wp(4),
     paddingHorizontal: wp(2),
-    tintColor: '#999',
-  }
+    tintColor: COLORS.orange,
+  },
 });

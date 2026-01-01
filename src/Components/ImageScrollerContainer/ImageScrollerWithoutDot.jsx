@@ -2,6 +2,7 @@ import { View, Image, ScrollView } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { wp, hp } from '../../Theme/Dimensions';
 import { COLORS } from '../../Theme/Colors';
+import { BACKEND_URL } from '../../Api/Api';
 
 const ImageScrollerWithoutDot = ({ images }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -25,18 +26,21 @@ const ImageScrollerWithoutDot = ({ images }) => {
         scrollEventThrottle={16}
         style={{ width: '100%', height: '100%' }}
       >
+        {/* `${BACKEND_URL}/${item.icon}` */}
         {images.map((image, index) => (
           <Image
             key={index}
-            source={image}
+            source={{uri:`${BACKEND_URL}/${image?.imageUrl}`}}
             style={{
-              width: wp(89),
+              width: wp(89), 
               height: '100%',
               borderRadius: wp(6),
               marginLeft: wp(1),
             //   borderCurve: 'continious', //ios only
             }}
-            resizeMode="cover"
+            // resizeMode="cover"
+            resizeMethod='auto'
+            resizeMode='stretch'
           />
         ))}
       </ScrollView>

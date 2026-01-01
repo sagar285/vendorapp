@@ -10,7 +10,7 @@ const baseUrl = BASE_URL;
 // ------------------------------------
 export async function getHeaders(extraHeaders = {}, isMultipart = false) {
   let token = await AsyncStorage.getItem('token');
-
+console.log(token,"kkkkkk")
   let headers = {
     Authorization: token ? `Bearer ${token}` : "",
     ...extraHeaders,

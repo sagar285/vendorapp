@@ -20,6 +20,8 @@ const Input = ({
   value,
   onChangeText,
   secureTextEntry = false,
+  maxLength,
+  keyboardType
 }) => {
   const [hidePassword, setHidePassword] = useState(secureTextEntry);
 
@@ -35,8 +37,10 @@ const Input = ({
           placeholder={placeholder}
           placeholderTextColor={COLORS.placeHolderGray}
           value={value}
+          maxLength={maxLength}
           onChangeText={onChangeText}
           secureTextEntry={hidePassword}
+          keyboardType={keyboardType}
         />
 
         {/* 👁 EYE ICON ONLY IF PASSWORD */}

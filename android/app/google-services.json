@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "93672260908",
+    "project_id": "ghartak-92ab5",
+    "storage_bucket": "ghartak-92ab5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93672260908:android:68d6b1e39907110fb95889",
+        "android_client_info": {
+          "package_name": "com.vendorapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYU77CMpquJ3E33i5gr3Db5smnnlzHd0k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

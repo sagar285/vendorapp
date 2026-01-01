@@ -15,7 +15,7 @@ export default function AuthStack() {
       <Stack.Screen name={NavigationString.DNT_VENDORREGISTER} component={Screen.DNT_VendorRegister} />
       <Stack.Screen name={NavigationString.DNT_VerifyingDetails} component={Screen.DNT_VerifyingDetails} />
       <Stack.Screen name={NavigationString.BottomTab} component={BottomTabs}  screenOptions={{ headerShown: false }} />
-
+      <Stack.Screen name={NavigationString.DNT_VENDORREGISTER} component={Screen.VendorRegister} />
     </Stack.Navigator>
   );
 }

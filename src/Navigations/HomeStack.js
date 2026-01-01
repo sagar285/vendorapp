@@ -8,10 +8,18 @@ const Stack = createNativeStackNavigator()
 const HomeStack = () => {
    
     return (
-        <Stack.Navigator>
-                  <Stack.Screen
+        <Stack.Navigator
+        initialRouteName={NavigationString.DNT_Home}
+        >
+                  {/* <Stack.Screen
         name={NavigationString.DNT_AddShop}
         component={Screen.DNT_AddShop}
+        options={{ headerShown: false }}
+      />  */}
+
+<Stack.Screen
+        name={NavigationString.DNT_Home}
+        component={Screen.DNT_Home}
         options={{ headerShown: false }}
       /> 
         <Stack.Screen
@@ -29,11 +37,7 @@ const HomeStack = () => {
         component={Screen.DNT_SuccesFull}
         options={{ headerShown: false }}
       /> 
-        <Stack.Screen
-        name={NavigationString.DNT_Home}
-        component={Screen.DNT_Home}
-        options={{ headerShown: false }}
-      /> 
+        
         <Stack.Screen
         name={NavigationString.DNT_ViewShop}
         component={Screen.DNT_ViewShop}

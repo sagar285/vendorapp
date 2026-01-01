@@ -1,121 +1,204 @@
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity } from 'react-native';
-import React, { useState,useEffect } from 'react';
-import { COLORS } from "../Theme/Colors";
-import { wp, hp } from "../Theme/Dimensions";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  TextInput
+} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { COLORS } from '../Theme/Colors';
+import { wp, hp } from '../Theme/Dimensions';
 import { FONTS } from '../Theme/FontFamily';
 import ShopCard from '../Components/Cards/ShopCard';
-import { apiGet } from '../Api/Api';
-import RNFS from "react-native-fs";
-import Share from "react-native-share";
-import RNBlob from "react-native-blob-util";
+import { apiGet, apiPost } from '../Api/Api';
+import RNFS from 'react-native-fs';
+import Share from 'react-native-share';
+import RNBlob from 'react-native-blob-util';
+import { useNavigation } from '@react-navigation/native';
+import NavigationStrings from '../Navigations/NavigationStrings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAppContext } from '../Context/AppContext';
+
 const Home = () => {
+  const navigation = useNavigation();
+  const [searchText, setSearchText] = useState('');
+  const [userShops, setUserShops] = useState([]); // original data
+  const [filteredShops, setFilteredShops] = useState([]); // searched result
+  const [loadYourShop,setloadYourshop] =useState(false)
+  const {user} =useAppContext()
+
+  const [loadingQR, setLoadingQR] = useState(false);
+  const [qrImageBase64, setQrImageBase64] = useState(null);
 
 
-   const [userShops, setUserShops] = useState([]);
-     const [loadingQR, setLoadingQR] = useState(false);
-     const [qrImageBase64, setQrImageBase64] = useState(null);
+
+  const uploadAsyncFCMtoken = async () => {
+    try {
+      const result = await AsyncStorage.getItem('fcmtoken');
+      if (result) {
+        const url = '/fcmtoken/';
+        const payload = {
+          userId: user._id,
+          token: result,
+        };
+        const response = await apiPost(url, payload);
+        console.log(response, 'dhkdjfjdfhdf');
+      }
+    } catch (error) {
+      console.log(error, 'error in token');
+    }
+  };
+
+  useEffect(() => {
+    uploadAsyncFCMtoken();
+  }, []); 
 
   const getShops = async () => {
     try {
+      setloadYourshop(true)
       const result = await apiGet('/vendor/shop/get');
-      console.log(result,"user shop reust")
+      console.log(result, 'user shop reust');
       if (result.message === 'user shop get succed') {
-        setUserShops(result.data);  
+        setUserShops(result.data);
+        setFilteredShops(result.data);
+        setloadYourshop(false)
       }
     } catch (error) {
       if (error.message === 'Not have valid role') {
         setopenform(true);
+        setloadYourshop(false)
       }
     }
   };
 
-  console.log(userShops,"kkkkk")
+  console.log(userShops, 'kkkkk');
 
-   useEffect(() => {
-      getShops();
-    }, []);
+  useEffect(() => {
+    getShops();
+  }, []);
 
-  const handleViewShop = (shop) => {
-    console.log("View Shop:", shop);
+  const handleViewShop = shop => {
+    console.log('View Shop:', shop);
     // Add your navigation logic here
   };
 
+  const handleShareQR = async shop => {
+    try {
+      setLoadingQR(true);
 
+      const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
+      const base64 = result?.qrImage;
 
-   const handleShareQR = async (shop) => {
-      try {
-        setLoadingQR(true);
-    
-        const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
-        const base64 = result?.qrImage;
-    
-        if (!base64) {
-          setLoadingQR(false);
-          Alert.alert("Error", "Failed to generate QR code.");
-          return;
-        }
-    
-        // DO NOT manipulate base64 string from backend  
-        setQrImageBase64(base64);
-    
+      if (!base64) {
         setLoadingQR(false);
-
-        const base64Data = base64.split("base64,")[1];
-              const filePath = RNBlob.fs.dirs.CacheDir + `/qr_${Date.now()}.png`;
-               await RNBlob.fs.writeFile(filePath, base64Data, "base64");
-               console.log("BLOB FILE PATH:", filePath);
-
-
-          const contentUri = await RNBlob.fs.stat(filePath).then((info) => info.path);
-          
-              console.log("CONTENT URI:", contentUri);
-              await Share.open({
-                url: "file://" + contentUri,
-                type: "image/png",
-                failOnCancel: false,
-              });
-
-    
-      } catch (error) {
-        setLoadingQR(false);
-        Alert.alert("Error", "Something went wrong.");
+        Alert.alert('Error', 'Failed to generate QR code.');
+        return;
       }
-    };
+
+      // DO NOT manipulate base64 string from backend
+      setQrImageBase64(base64);
+
+      setLoadingQR(false);
+
+      const base64Data = base64.split('base64,')[1];
+      const filePath = RNBlob.fs.dirs.CacheDir + `/qr_${Date.now()}.png`;
+      await RNBlob.fs.writeFile(filePath, base64Data, 'base64');
+      console.log('BLOB FILE PATH:', filePath);
+
+      const contentUri = await RNBlob.fs.stat(filePath).then(info => info.path);
+
+      console.log('CONTENT URI:', contentUri);
+      await Share.open({
+        url: 'file://' + contentUri,
+        type: 'image/png',
+        failOnCancel: false,
+      });
+    } catch (error) {
+      setLoadingQR(false);
+      Alert.alert('Error', 'Something went wrong.');
+    }
+  };
+
+  const handleSearch = text => {
+    setSearchText(text);
+
+    if (!text.trim()) {
+      setFilteredShops(userShops);
+      return;
+    }
+    const filtered = userShops.filter(shop =>
+      shop?.shopName?.toLowerCase().includes(text.toLowerCase()),
+    );
+    setFilteredShops(filtered);
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.searchContainer}>
-          <Image
-            source={require("../assets/images/Search.png")}
-            style={styles.searchIcon}
-            resizeMode="contain"
-          />
-          <Text style={styles.searchPlaceholder}>Search for your shops within...</Text>
+<>
+    {
+      userShops.length > 0 ? (
+        <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.searchContainer}>
+            <Image
+              source={require('../assets/images/Search.png')}
+              style={styles.searchIcon}
+              resizeMode="contain"
+            />
+            <TextInput
+              placeholder="Search shop..."
+              value={searchText}
+              onChangeText={handleSearch}
+            />
+          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate(NavigationStrings.DNT_AddYourShop)}
+            style={styles.addButton}
+          >
+            <Image
+              source={require('../assets/images/Add.png')}
+              style={styles.iconADD}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.addButton}>
-          <Image
-            source={require("../assets/images/Add.png")}
-            style={styles.iconADD}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
+  
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {filteredShops?.map(shop => (
+            <ShopCard
+              key={shop.id}
+              shop={shop}
+              onViewShop={handleViewShop}
+              onShareQR={handleShareQR}
+              getusershops={getShops}
+            />
+          ))}
+        </ScrollView>
       </View>
-
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {userShops?.map((shop) => (
-          <ShopCard 
-            key={shop.id} 
-            shop={shop}
-            onViewShop={handleViewShop}
-            onShareQR={handleShareQR}
-          />
-        ))}
-      </ScrollView>
-    </View>
+      ) : (
+        <View style={styles.container1}>
+             <Image
+               source={require("../assets/images/Scoter.png")}
+               style={styles.image}
+               resizeMode="contain"
+             />
+             <Text style={styles.title}>Nothing Here Yet...</Text>
+             <Text style={styles.subText}>
+               Start by adding your shop and watch your{'\n'}business come alive.
+             </Text>
+       
+             <TouchableOpacity onPress={()=>navigation.navigate(NavigationStrings.DNT_AddYourShop)} style={styles.button}>
+               <Text style={styles.plusIcon}>+</Text>
+               <Text style={styles.btnText}>Add Your shop</Text>
+             </TouchableOpacity>
+           </View>
+      )
+    }
+   </>
   );
 };
 
@@ -165,4 +248,60 @@ const styles = StyleSheet.create({
     paddingTop: hp(1),
     paddingBottom: hp(8),
   },
+
+
+  container1: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: wp(5),
+    paddingBottom: hp(10), 
+  },
+  image: {
+    width: wp(60),
+    height: wp(60),
+    marginBottom: hp(2),
+  },
+  title: {
+    fontSize: wp(5.5),
+    color: COLORS.BlackText,
+    marginBottom: hp(1.5),
+    textAlign: 'center',
+    fontFamily:FONTS.InterMedium
+  },
+  subText: {
+    fontSize: wp(3.8),
+    color: COLORS.grayText,
+    textAlign: 'center',
+    lineHeight: hp(2.5),
+    paddingHorizontal: wp(8),
+    marginBottom: hp(4),
+    fontFamily:FONTS.InterRegular
+  },
+  button: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.orange,
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(6),
+    borderRadius: wp(2.5),
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: COLORS.orange,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+  plusIcon: {
+    color: COLORS.white,
+    fontSize: wp(5),
+    marginRight: wp(2),
+    fontWeight: '600',
+  },
+  btnText: {
+    color: COLORS.white,
+    fontSize: wp(4),
+    fontWeight: '600',
+  }
 });

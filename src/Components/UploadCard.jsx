@@ -6,7 +6,7 @@ import { FONTS } from '../Theme/FontFamily';
 
 const UploadCard = ({ onPress, image, isArray = false, onRemove, maxImages = 5 }) => {
   const hasImages = isArray ? (image?.length > 0) : image;
-
+console.log(image?.length,"hhshhshshssh",maxImages);
   return (
     <TouchableOpacity
       style={styles.container}
@@ -35,8 +35,9 @@ const UploadCard = ({ onPress, image, isArray = false, onRemove, maxImages = 5 }
                     )}
                   </View>
                 ))}
-                {image.length < maxImages && (
+                {image.length < maxImages && ( 
                   <TouchableOpacity style={styles.addMoreButton} onPress={onPress}>
+                    {console.log("kkkkkkk998798798798798789")}
                     <Text style={styles.addMoreText}>+</Text>
                     <Text style={styles.addMoreSubtext}>Add More</Text>
                   </TouchableOpacity>

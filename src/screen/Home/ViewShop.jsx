@@ -82,7 +82,6 @@ const ViewShop = ({ route, navigation }) => {
   const getQRCode = async () => {
     try {
       setLoadingQR(true);
-  
       const result = await apiGet(`/vendor/shop/qr/${shopData._id}`);
       const base64 = result?.qrImage;
   

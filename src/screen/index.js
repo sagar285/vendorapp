@@ -31,3 +31,7 @@ export {default as DNT_Categoris} from "../DNT_DESIGN/Categories";
 export {default as DNT_UserProfile} from "../DNT_DESIGN/UserProfile";
 export {default as DNT_ResetPassword} from "../DNT_DESIGN/ResetPassword";
 export {default as DNT_Order} from "../DNT_DESIGN/Order";
+export {default as DNT_Order_Details} from "../DNT_DESIGN/OrderDetails";
+export {default as DNT_Support_Request} from "../DNT_DESIGN/SupportRequest";
+export {default as DNT_Forgot_Password} from "../DNT_DESIGN/ForgotPassword";
+

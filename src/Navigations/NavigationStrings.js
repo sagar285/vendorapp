@@ -38,5 +38,7 @@ export default {
       DNT_UserProfile:"UserProfile",
       DNT_ResetPassword:"ResetPassword",
       DNT_Order:"Order",
-
+      DNT_Order_Details:"Order_details",
+      DNT_Support_Request:"DNT_Support_Request",
+      DNT_Forgot_Password:"DNT_Forgot_Password"
 }

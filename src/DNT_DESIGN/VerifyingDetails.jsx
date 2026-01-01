@@ -7,9 +7,25 @@ import { FONTS } from "../Theme/FontFamily";
 import FullwidthButton from '../Components/FullwidthButton';
 import { useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAppContext } from '../Context/AppContext';
 
 const VerifyingDetails = () => {
     const Navigation = useNavigation()
+const {user, setUser} =useAppContext()
+
+    const onLogout = async () => {
+      await AsyncStorage.clear();
+      setUser(null);
+      Navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: NavigationStrings.DNT_LOGIN,
+          },
+        ],
+      });
+    };
   return (
     <View style={styles.container}>
       <Header title="Register" /> 
@@ -31,7 +47,7 @@ const VerifyingDetails = () => {
       <View style={styles.footer}>
         <FullwidthButton 
             title="Back to login" 
-            onPress={()=>Navigation.navigate(NavigationStrings.DNT_LOGIN)}
+            onPress={()=>onLogout()}
         />
       </View>
     </View>

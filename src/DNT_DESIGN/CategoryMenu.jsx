@@ -1,48 +1,86 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, FlatList } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  FlatList,
+} from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import FullwidthButton from '../Components/FullwidthButton';
-import { COLORS } from "../Theme/Colors";
-import { wp, hp } from "../Theme/Dimensions";
+import { COLORS } from '../Theme/Colors';
+import { wp, hp } from '../Theme/Dimensions';
 import { FONTS } from '../Theme/FontFamily';
-import EditAddMenuiIemModal from "../Components/EditAddMenuiIemModal"
-import { apiGet, BACKEND_URL } from '../Api/Api';
+import EditAddMenuiIemModal from '../Components/EditAddMenuiIemModal';
+import { apiDelete, apiGet, BACKEND_URL } from '../Api/Api';
 import { AddMenu } from '../screen';
-const CategoryMenu = ({ navigation,route }) => {
-  const shopId =route.params.shopId;
+import NavigationStrings from '../Navigations/NavigationStrings';
+import CategoryModal from '../Components/CategoryModal';
+import { useFocusEffect } from '@react-navigation/native';
+const CategoryMenu = ({ navigation, route }) => {
+  const shopId = route.params.shopId;
   const [categories, setCategories] = useState([
     { id: 1, name: 'Category Name #1', items: 0 },
     { id: 2, name: 'Category Name #2', items: 2 },
-    { id: 3, name: 'Category Name #3', items: 11 }
+    { id: 3, name: 'Category Name #3', items: 11 },
   ]);
-    const [modalVisible,setModalVisible] = useState(false)
-    const [selectedCategoryId,setSelectedCategoryId] =useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [catmodalVisible, setcatModalVisible] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
+  // console.log(hhhhhh);
 
+  const getCategories = async () => {
+    try {
+      const res = await apiGet(`/menu/category/${shopId}`);
+      console.log(res, 'categoriesssss');
+      setCategories(res?.categories || []);
+    } catch (err) {
+      console.log('Get category error:', err);
+    }
+  };
 
-      const getCategories = async () => {
+  const addMenuItem = id => {
+    setSelectedCategoryId(id);
+    setModalVisible(true);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      getCategories();
+    }, []),
+  );
+
+   const deleteCategory = async categoryId => {
         try {
-          const res = await apiGet(`/menu/category/${shopId}`);
-          console.log(res,"categoriesssss")
-          setCategories(res?.categories || []);
+          await apiDelete(`/menu/category/delete/${categoryId}`);
+          getCategories()
         } catch (err) {
-          console.log('Get category error:', err);
+          console.log('Delete category error:', err);
         }
       };
 
-      const addMenuItem = (id) =>{
-        setSelectedCategoryId(id);
-        setModalVisible(true)
-      }
+  const onClose = () => {
+    getCategories();
+    setcatModalVisible(false);
+  };
 
-
-      useEffect(()=>{
-        getCategories()
-      },[])
-  
+  const onCloseItem = () => {
+    getCategories();
+    setModalVisible(false);
+  };
 
   const renderCategoryItem = ({ item }) => (
     <View style={styles.categoryCard}>
-      <View style={styles.categoryContent}>
+      <TouchableOpacity
+        onPress={() =>
+          navigation.navigate(NavigationStrings.DNT_Categoris, {
+            category: item,
+            shopId:shopId
+          })
+        }
+        style={styles.categoryContent}
+      >
         {/* Gray Background Box */}
         <View style={styles.CategoryiconContainer}>
           <Image
@@ -51,23 +89,30 @@ const CategoryMenu = ({ navigation,route }) => {
             resizeMode="cover"
           />
         </View>
-        
+
         {/* Text Section */}
         <View style={styles.categoryTextContainer}>
           <Text style={styles.categoryName}>{item.name}</Text>
           <Text style={styles.categoryItems}>
-            {item.itemCount === 0 ? 'No Items' : `${item.itemCount} ${item.itemCount === 1 ? 'Item' : 'Items'}`}
+            {item.itemCount === 0
+              ? 'No Items'
+              : `${item.itemCount} ${item.itemCount === 1 ? 'Item' : 'Items'}`}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.categoryActions}>
-        <TouchableOpacity onPress={()=>addMenuItem(item._id)} style={styles.addItemsButton}>
-          <Text style={styles.addItemsText}>+  Add Items</Text>
+        <TouchableOpacity
+          onPress={() => addMenuItem(item._id)}
+          style={styles.addItemsButton}
+        >
+          <Text style={styles.addItemsText}>+ Add Items</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuButtonContainer}>
+        <TouchableOpacity
+        onPress={()=>deleteCategory(item._id)}
+        style={styles.menuButtonContainer}>
           <Image
-            source={require("../assets/images/ThreeDot.png")}
+            source={require('../assets/images/Delete.png')}
             style={styles.menuIcon}
             resizeMode="contain"
           />
@@ -80,9 +125,12 @@ const CategoryMenu = ({ navigation,route }) => {
     <View style={styles.container}>
       {/* Custom Header Section */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButtonContainer}
+        >
           <Image
-            source={require("../assets/images/LeftArrow.png")}
+            source={require('../assets/images/LeftArrow.png')}
             style={styles.backIcon}
             resizeMode="contain"
           />
@@ -103,18 +151,25 @@ const CategoryMenu = ({ navigation,route }) => {
 
       {/* Bottom Button */}
       <View style={styles.footer}>
-        <FullwidthButton 
+        <FullwidthButton
           title="Add Category"
-          onPress={() => setModalVisible(true)}
+          onPress={() => setcatModalVisible(true)}
         />
       </View>
       <EditAddMenuiIemModal
-      visible={modalVisible}
-  onClose={() => setModalVisible(false)}
-  title="Your Title"
-  selectedCategoryId={selectedCategoryId}
+        visible={modalVisible}
+        onClose={() => onCloseItem()}
+        title="Your Title"
+        selectedCategoryId={selectedCategoryId}
+        shopId={shopId}
       />
- 
+
+      <CategoryModal
+        visible={catmodalVisible}
+        onClose={() => onClose()}
+        title="Your Title"
+        shopId={shopId}
+      />
     </View>
   );
 };
@@ -144,7 +199,7 @@ const styles = StyleSheet.create({
     fontSize: wp(4.5),
     color: COLORS.BlackText,
     textAlign: 'center',
-    fontFamily: FONTS.InterSemiBold
+    fontFamily: FONTS.InterSemiBold,
   },
   emptyView: {
     width: wp(6),
@@ -158,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     // Removed horizontal padding here to align strictly with the edges
-    paddingVertical: hp(1), 
+    paddingVertical: hp(1),
     marginBottom: hp(1.5),
   },
   categoryContent: {
@@ -169,7 +224,7 @@ const styles = StyleSheet.create({
   // --- UPDATED SECTION ---
   CategoryiconContainer: {
     backgroundColor: COLORS.CategoryIconBg || '#F6F8fa', // Fallback color if undefined
-    width: wp(13),  // Fixed width for perfect square
+    width: wp(13), // Fixed width for perfect square
     height: wp(13), // Fixed height for perfect square
     borderRadius: wp(3.5), // Rounded corners
     justifyContent: 'center', // Center vertical
@@ -177,9 +232,10 @@ const styles = StyleSheet.create({
     marginRight: wp(3.5), // Space between box and text
   },
   categoryIcon: {
-    width: wp(6),
-    height: wp(6),
-    tintColor: '#202020' // Ensures icon is dark gray/black
+    width: wp(13),
+    height: wp(13),
+    borderRadius: wp(3.5),
+    // tintColor: '#202020', // Ensures icon is dark gray/black
   },
   // -----------------------
   categoryTextContainer: {
@@ -219,7 +275,7 @@ const styles = StyleSheet.create({
   menuIcon: {
     width: wp(4),
     height: wp(4),
-    tintColor: '#999', // Usually gray in these designs
+    tintColor: '#FF5C40', // Usually gray in these designs
   },
   footer: {
     paddingBottom: hp(9),

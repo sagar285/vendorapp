@@ -78,7 +78,7 @@ const Signup = () => {
       if (error?.user?.isVerified == true ) {
          navigation.navigate(NavigationStrings.DNT_PASSWORD)
       }else{
-          navigation.navigate(NavigationStrings.DNT_LOGIN)
+          // navigation.navigate(NavigationStrings.DNT_LOGIN)
       }
       console.log(error,"error")
       setErrorMsg(error?.message || "Something went wrong");

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View, Image, TouchableOpacity, BackHandler, Alert } from 'react-native'
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from '../Theme/FontFamily';
@@ -34,7 +34,6 @@ const AddShop = () => {
       };
 
  useEffect(() => {
- 
     getShops();
   }, []);
 
@@ -42,7 +41,26 @@ const AddShop = () => {
  
 
  
+   useEffect(() => {
+     const backAction = () => {
+       Alert.alert(
+         "Exit App",
+         "Kya aap app band karna chahte ho?",
+         [
+           { text: "Cancel", style: "cancel" },
+           { text: "Yes", onPress: () => BackHandler.exitApp() },
+         ]
+       );
+       return true; // 🔴 default back disable
+     };
  
+     const backHandler = BackHandler.addEventListener(
+       "hardwareBackPress",
+       backAction
+     );
+ 
+     return () => backHandler.remove();
+   }, []);
 
 
 
@@ -62,7 +80,7 @@ const AddShop = () => {
 
       <TouchableOpacity onPress={()=>Navigation.navigate(NavigationStrings.DNT_AddYourShop)} style={styles.button}>
         <Text style={styles.plusIcon}>+</Text>
-        <Text style={styles.btnText}>Add a shop</Text>
+        <Text style={styles.btnText}>Add Your shop</Text>
       </TouchableOpacity>
     </View>
   )

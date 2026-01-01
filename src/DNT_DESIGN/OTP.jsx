@@ -8,30 +8,37 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import Header from "../Components/Header/Header";
 import { COLORS } from "../Theme/Colors";
 import { wp, hp } from "../Theme/Dimensions";
 import { FONTS } from "../Theme/FontFamily";
 import FullWidthButton from "../Components/FullwidthButton";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from "@react-navigation/native";
 import NavigationStrings from "../Navigations/NavigationStrings";
 import { useAppContext } from "../Context/AppContext";
 import { apiPost } from "../Api/Api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const RESEND_TIME = 100; // 5 minutes
+
 const OTP = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { email } = route.params || {};
-
   const { setActiveLoader } = useAppContext();
+
+  const inputs = useRef([]);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-
-  const inputs = useRef([]);
+  const [timer, setTimer] = useState(RESEND_TIME);
 
   useFocusEffect(
     useCallback(() => {
@@ -39,6 +46,24 @@ const OTP = () => {
     }, [])
   );
 
+  /* ================= Timer ================= */
+  useEffect(() => {
+    if (timer <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const formatTime = () => {
+    const min = Math.floor(timer / 60);
+    const sec = timer % 60;
+    return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
+
+  /* ================= OTP Input ================= */
   const handleChange = (text, index) => {
     if (!/^\d*$/.test(text)) return;
 
@@ -66,11 +91,14 @@ const OTP = () => {
     }
   };
 
+  const isOtpComplete = otp.every((digit) => digit !== "");
+
+  /* ================= Verify OTP ================= */
   const handleVerify = async () => {
     const finalOtp = otp.join("");
 
     if (finalOtp.length !== 6) {
-      setErrorMsg("Please enter valid 6 digit OTP");
+      setErrorMsg("Please enter a valid 6-digit OTP");
       return;
     }
 
@@ -78,25 +106,40 @@ const OTP = () => {
       setLoading(true);
       setErrorMsg("");
 
-      const payload = {
-        email,
-        otp: finalOtp,
-      };
-
+      const payload = { email, otp: finalOtp };
       const res = await apiPost("/auth/verify-otp", payload);
-    console.log(res,"otp ke bad k data hau ye dekhhhhhhhhhhhhhhhhh")
+
       if (res?.tempToken) {
         await AsyncStorage.setItem("token", res.tempToken);
         navigation.navigate(NavigationStrings.DNT_PASSWORD);
       }
     } catch (error) {
-      console.log(error,"dekh error aayi hai")
-      if (error?.message == "User already verified") {
-          navigation.navigate(NavigationStrings.DNT_PASSWORD)
+      if (error?.message === "User already verified") {
+        navigation.navigate(NavigationStrings.DNT_PASSWORD);
+        return;
       }
       setErrorMsg(error?.message || "Invalid OTP");
     } finally {
       setLoading(false);
+    }
+  };
+
+  /* ================= Resend OTP ================= */
+  const sendResetOtp = async () => {
+    try {
+      setResendLoading(true);
+      setErrorMsg("");
+
+      const payload = { email };
+      await apiPost("/user/send-reset-otp", payload);
+
+      setOtp(["", "", "", "", "", ""]);
+      inputs.current[0]?.focus();
+      setTimer(RESEND_TIME);
+    } catch (error) {
+      setErrorMsg("Failed to resend OTP. Try again.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -107,7 +150,7 @@ const OTP = () => {
     >
       <View style={styles.container}>
         <ScrollView
-          contentContainerStyle={{ paddingBottom: hp(20) }}
+          contentContainerStyle={{ paddingBottom: hp(18) }}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.headerSpacing}>
@@ -116,11 +159,11 @@ const OTP = () => {
 
           <View style={styles.titleContainer}>
             <Text style={styles.title}>Verify OTP</Text>
+
             <Text style={styles.description}>
-              A 6-digit code was sent to{" "}
-              <Text style={{ fontFamily: FONTS.InterSemiBold }}>
-                {email}
-              </Text>
+              We’ve sent a 6-digit verification code to{"\n"}
+              <Text style={styles.emailText}>{email}</Text>
+              {"\n"}Please check your inbox or spam folder.
             </Text>
           </View>
 
@@ -129,7 +172,10 @@ const OTP = () => {
               <TextInput
                 key={index}
                 ref={(ref) => (inputs.current[index] = ref)}
-                style={styles.otpBox}
+                style={[
+                  styles.otpBox,
+                  val && styles.otpBoxFilled,
+                ]}
                 keyboardType="number-pad"
                 maxLength={1}
                 value={val}
@@ -139,16 +185,21 @@ const OTP = () => {
             ))}
           </View>
 
-          {errorMsg ? (
-            <Text style={styles.errorText}>{errorMsg}</Text>
-          ) : null}
+          {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
         </ScrollView>
 
         <View style={styles.bottomButtons}>
           <FullWidthButton
-            title="Resend Code"
+            title={
+              timer > 0
+                ? `Resend in ${formatTime()}`
+                : resendLoading
+                ? "Resedn"
+                : "Resend Code"
+            }
             borderOnly
-            onPress={() => {}}
+            disabled={timer > 0 || resendLoading}
+            onPress={sendResetOtp}
           />
 
           <FullWidthButton
@@ -160,7 +211,7 @@ const OTP = () => {
               )
             }
             onPress={handleVerify}
-            disabled={loading}
+            disabled={!isOtpComplete || loading}
           />
         </View>
       </View>
@@ -169,6 +220,8 @@ const OTP = () => {
 };
 
 export default OTP;
+
+/* ================= Styles ================= */
 
 const styles = StyleSheet.create({
   container: {
@@ -194,9 +247,15 @@ const styles = StyleSheet.create({
 
   description: {
     fontFamily: FONTS.InterRegular,
-    fontSize: wp(3.6),
+    fontSize: wp(3.8),
     color: COLORS.grayText,
     marginTop: hp(1),
+    lineHeight: hp(2.6),
+  },
+
+  emailText: {
+    fontFamily: FONTS.InterSemiBold,
+    color: COLORS.BlackText,
   },
 
   otpContainer: {
@@ -215,6 +274,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: FONTS.InterSemiBold,
     color: COLORS.BlackText,
+  },
+
+  otpBoxFilled: {
+    borderColor: COLORS.primary,
   },
 
   errorText: {
