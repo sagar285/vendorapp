@@ -64,9 +64,10 @@ const handleSharePress = async () => {
             flex: 1,
             flexDirection: 'row',
             justifyContent: 'space-between',
+            alignItems:"center"
           }}
         >
-          <Text style={styles.shopName}>{shop?.shopName}</Text>
+         / <Text style={styles.shopName}>{shop?.shopName?.length >15 ? shop?.shopName?.slice(0, 15) + '..': shop?.shopName }</Text>
 
           <View style={styles.detailsRow}>
             <View style={styles.detailItem}>
@@ -77,7 +78,7 @@ const handleSharePress = async () => {
               />
               <Text style={styles.detailText}>
                 {shop?.shopAddress?.addressLine?.length > 9
-                  ? shop.shopAddress?.addressLine?.slice(0, 9) + '..'
+                  ? shop.shopAddress?.addressLine?.slice(0, 12) + '..'
                   : shop?.shopAddress?.addressLine}
               </Text>
             </View>
@@ -166,6 +167,9 @@ const styles = StyleSheet.create({
     color: COLORS.BlackText,
     fontFamily: FONTS.InterSemiBold,
     marginBottom: hp(1),
+    // borderBottomWidth:2,
+    // borderTopWidth:2
+
   },
   detailsRow: {
     flexDirection: 'row',
@@ -175,6 +179,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: wp(1),
+    marginBottom:hp(1),
+    // borderBottomWidth:2,
+    // borderTopWidth:2
+
   },
   icon: {
     width: wp(4),

@@ -41,7 +41,7 @@ const SuccessFull = () => {
 
     const timer = setTimeout(() => {
       navigation.navigate(NavigationStrings.DNT_Home)
-    }, 1000);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);

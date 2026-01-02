@@ -163,7 +163,7 @@ const OTP = () => {
             <Text style={styles.description}>
               We’ve sent a 6-digit verification code to{"\n"}
               <Text style={styles.emailText}>{email}</Text>
-              {"\n"}Please check your inbox or spam folder.
+              {/* {"\n"}Please check your inbox or spam folder. */}
             </Text>
           </View>
 

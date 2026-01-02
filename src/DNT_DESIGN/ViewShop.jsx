@@ -17,7 +17,7 @@ import { apiGet } from '../Api/Api';
 import ImageScrollView from '../Components/ImageScrollerContainer/ImageScrollerWithoutDot';
 import { useFocusEffect } from '@react-navigation/native';
 import ImageModal from "../Components/ViewImageModal/ImageModal";
-
+import EditShopModal from "../Components/EditShopModal/EditShopModal"
 
 
 const ViewShop = ({ navigation, route }) => {
@@ -28,7 +28,7 @@ const ViewShop = ({ navigation, route }) => {
   const [loadingQR, setLoadingQR] = useState(false);
   const [qrImageBase64, setQrImageBase64] = useState(null);
   const [imageModalVsible,setimageModalvisible] =useState(false);
-
+const [editModalVisible, setEditModalVisible] = useState(false);
   console.log(paramsshop,"paramsshop")
 
   /* -------------------------------- FORMAT DATA -------------------------------- */
@@ -49,6 +49,7 @@ const ViewShop = ({ navigation, route }) => {
     return {
       id: shop?._id,
       name: shop?.shopName || '',
+      fullAddress: shop?.shopAddress?.addressLine || '',
       location: addressParts?.[0] || '',
       location1: addressParts?.[1] || '',
       location2: addressParts?.[2] || '',
@@ -143,7 +144,20 @@ const onClose = () =>{
           />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Shop Details</Text>
-        <View style={styles.emptyView} />
+       <View style={styles.emptyView}>
+  <TouchableOpacity 
+    activeOpacity={0.7} 
+    onPress={() => {
+      console.log("Opening Modal..."); // Debugging ke liye
+      setEditModalVisible(true);
+    }}
+  >
+    <Image
+      source={require('../assets/images/Pen.png')}
+      style={styles.EditIcon}
+    />
+  </TouchableOpacity>
+</View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -308,6 +322,16 @@ const onClose = () =>{
       onClose={onClose}
       id={shopDetail?.id}
       />
+     <EditShopModal
+        visible={editModalVisible}
+        shopData={shopDetail}
+        onClose={(refresh) => {
+          setEditModalVisible(false);
+          if (refresh) {
+            getShopDetails(); 
+          }
+        }}
+      />
     </View>
   );
 };
@@ -369,6 +393,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   backIcon: {
+    width: wp(4),
+    height: wp(4),
+  },
+  EditIcon: {
     width: wp(6),
     height: wp(6),
   },

@@ -5,9 +5,10 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  TextInput
+  TextInput,
+  BackHandler
 } from 'react-native';
-import React, { useState, useEffect ,useRef} from 'react';
+import React, { useState, useEffect ,useRef, useCallback} from 'react';
 import { COLORS } from '../Theme/Colors';
 import { wp, hp } from '../Theme/Dimensions';
 import { FONTS } from '../Theme/FontFamily';
@@ -16,12 +17,15 @@ import { apiGet, apiPost } from '../Api/Api';
 import RNFS from 'react-native-fs';
 import Share from 'react-native-share';
 import RNBlob from 'react-native-blob-util';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import NavigationStrings from '../Navigations/NavigationStrings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppContext } from '../Context/AppContext';
 import QR_Template from "../Components/ShareQRTemplate/QR_Template"
 import ViewShot from "react-native-view-shot";
+import { NativeModules, PermissionsAndroid, Platform, Alert } from 'react-native';
+const { ImageToPdfModule } = NativeModules;
+
 
 const Home = () => {
   const navigation = useNavigation();
@@ -37,6 +41,29 @@ const Home = () => {
 const [tempShopData, setTempShopData] = useState(null);
 const [tempQR, setTempQR] = useState(null);
  
+   useFocusEffect(
+      useCallback(() => {
+  
+        const backAction = () => {
+          Alert.alert(
+            "Exit App",
+            "Are you sure you want to exit?",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "YES", onPress: () => BackHandler.exitApp() },
+            ]
+          );
+          return true;
+        };
+  
+        const backHandler = BackHandler.addEventListener(
+          "hardwareBackPress",
+          backAction
+        );
+  
+        return () => backHandler.remove();
+      }, [])
+    );
 
   const uploadAsyncFCMtoken =  async () => {
     try {
@@ -251,7 +278,91 @@ const [tempQR, setTempQR] = useState(null);
   }
 };
 
-    // navigation.navigate(NavigationStrings.QR_Template)
+//    const handleShareQR = async (shop, setLocalLoading) => {
+//   try {
+//     // Step 1: API se QR image lo
+//     const result = await apiGet(`/vendor/shop/qr/${shop._id}`);
+//     const base64 = result?.qrImage;
+
+//     if (!base64) {
+//       setLocalLoading(false);
+//       Alert.alert('Error', 'Failed to generate QR code.');
+//       return;
+//     }
+
+//     console.log('🔄 Setting shop data and QR...');
+
+//     // Step 2: State ko update karo
+//     setTempShopData(shop);
+//     setTempQR(base64);
+
+//     // Step 3: Images load hone ka wait karo
+//     setTimeout(async () => {
+//       console.log('⏳ Waiting for images to load...');
+
+//       setTimeout(async () => {
+//         try {
+//           if (viewShotRef.current) {
+//             console.log('✅ Capturing ViewShot...');
+
+//             // 🔥 FIX: Capture as BASE64 instead of file URI
+//             const capturedBase64 = await viewShotRef.current.capture({
+//               format: "png",
+//               quality: 1.0,
+//               result: "base64"  // ✅ Base64 me capture karo
+//             });
+
+//             console.log('✅ Image captured as base64');
+
+//             // 🔥 Step 5: Base64 ko temporary file me save karo
+//             const tempImagePath = `${RNFS.CachesDirectoryPath}/temp_qr_${Date.now()}.png`;
+            
+//             await RNFS.writeFile(tempImagePath, capturedBase64, 'base64');
+//             console.log('✅ Temp image saved at:', tempImagePath);
+
+//             // 🔥 Step 6: Image ko PDF me convert karo
+//             const pdfPath = await ImageToPdfModule.convertImagesToPdf(
+//               [tempImagePath], // ✅ Absolute file path pass karo
+//               `QR_${shop.shopName.replace(/\s+/g, '_')}_${Date.now()}.pdf`
+//             );
+
+//             console.log('✅ PDF created at:', pdfPath);
+
+//             // Step 7: PDF ko share karo
+//             await Share.open({
+//               url: 'file://' + pdfPath,
+//               type: 'application/pdf',
+//               failOnCancel: false,
+//             });
+
+//             // Cleanup: Temp image delete karo
+//             await RNFS.unlink(tempImagePath).catch(() => {});
+
+//             Alert.alert('Success', 'PDF shared successfully!');
+
+//           } else {
+//             console.log('❌ ViewShot ref not available');
+//             Alert.alert('Error', 'Failed to capture template');
+//           }
+//         } catch (error) {
+//           console.log('❌ Error:', error);
+//           Alert.alert('Error', 'Failed to create PDF: ' + error.message);
+//         } finally {
+//           setLocalLoading(false);
+
+//           setTimeout(() => {
+//             setTempShopData(null);
+//             setTempQR(null);
+//           }, 300);
+//         }
+//       }, 500);
+//     }, 500);
+//   } catch (error) {
+//     setLocalLoading(false);
+//     console.log('Error:', error);
+//     Alert.alert('Error', 'Something went wrong: ' + error.message);
+//   }
+// };
   
   
   const handleSearch = text => {

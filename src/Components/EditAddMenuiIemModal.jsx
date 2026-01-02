@@ -108,7 +108,8 @@ const EditAddMenuiIemModal = ({
   const [menuOffer, setMenuOffer] = useState('');
   const [menuPrice, setMenuPrice] = useState('');
   const [menuImage, setMenuImage] = useState(null);
-
+  const [addMenuItemLoading, setAddMenuItemLoading] = useState(false);
+   
   useEffect(() => {
     if (visible) {
       translateY.setValue(0);
@@ -198,7 +199,7 @@ const EditAddMenuiIemModal = ({
 
   const addMenuItem = async () => {
     if (!menuName || !menuPrice || !selectedCategoryId) return;
-
+    setAddMenuItemLoading(true);
     try {
       const form = new FormData();
       form.append('shopId', shopId);
@@ -222,8 +223,10 @@ const EditAddMenuiIemModal = ({
       setMenuImage(null);
       setQuantities([{ quantity: '', price: '' }]);
       // getCategories();
+      setAddMenuItemLoading(false);
       onClose();
     } catch (err) {
+      setAddMenuItemLoading(false);
       console.log('Add item error:', err);
     }
   };
@@ -434,7 +437,7 @@ const EditAddMenuiIemModal = ({
           </View>
         </ScrollView>
         <View style={{ marginBottom: hp(0.4) }}>
-          <FullwidthButton title="Submit" onPress={() => addMenuItem()} />
+          <FullwidthButton title="Submit" onPress={() => addMenuItem()} isloading={addMenuItemLoading} />
         </View>
       </Animated.View>
     </Modal>

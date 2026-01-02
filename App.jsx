@@ -2,10 +2,15 @@ import React, { useEffect } from "react";
 import { Platform, StyleSheet } from "react-native";
 import Route from "./src/Navigations/RootNavigator";
 import { AppProvider } from "./src/Context/AppContext";
-
+import { Text, TextInput } from 'react-native';
 import messaging from "@react-native-firebase/messaging";
 import notifee, { AndroidImportance } from "@notifee/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+Text.defaultProps  = Text.defaultProps || {};
+Text.defaultProps.allowFontScaling = false;
+TextInput.defaultProps = TextInput.defaultProps || {};
+TextInput.defaultProps.allowFontScaling = false;
 
 /* 🔔 CREATE SINGLE ORDER CHANNEL */
 async function createOrderChannel() {

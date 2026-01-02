@@ -96,7 +96,7 @@ const Signup = () => {
       style={styles.container}
     >
       <View style={styles.headerSpacing}>
-        <Header />
+        <Header  onBackPress={()=>navigation.goBack()}/>
       </View>
 
       <View style={styles.titleContainer}>

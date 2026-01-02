@@ -14,6 +14,11 @@ import { FONTS } from '../Theme/FontFamily';
 import EditMenuItemModal from '../Components/EditMenuItemModal';
 import { apiDelete, apiGet, BACKEND_URL } from '../Api/Api';
 import EditCtegoryModal from '../Components/EditCtegoryModal';
+import FullwidthButton from '../Components/FullwidthButton';
+import EditAddMenuiIemModal from '../Components/EditAddMenuiIemModal';
+import { ScrollView } from 'react-native/types_generated/index';
+import EditShopModal from "../Components/EditShopModal/EditShopModal"
+
 
 const CategoryDetails = ({ navigation, route }) => {
   const category = route.params.category;
@@ -26,7 +31,7 @@ const CategoryDetails = ({ navigation, route }) => {
   const [catmodalVisible, setcatModalVisible] = useState(false);
   const [editItem, seteditItem] = useState(null);
   const [categoryInfo,setcategoryInfo] =useState(null);
-
+ const [addModalVisible, setAddModalVisible] = useState(false);
 
 
   const getCategory =async() =>{
@@ -175,8 +180,8 @@ const CategoryDetails = ({ navigation, route }) => {
         </Text>
         <View style={styles.priceRow}>
           <View>
-            <Text style={styles.offerpriceText}>₹{item?.realprice}</Text>
             <Text style={styles.priceText}>₹{item?.price}</Text>
+            <Text style={styles.offerpriceText}>₹{item?.realprice}</Text>
           </View>
           <View
             style={[
@@ -243,6 +248,13 @@ const CategoryDetails = ({ navigation, route }) => {
         contentContainerStyle={styles.listContainer}
       />
 
+     <View style={styles.bottomButtonContainer}>
+   <FullwidthButton 
+    title="Add New Item" 
+    onPress={() => setAddModalVisible(true)}
+  />
+</View>
+
       <EditMenuItemModal
         visible={modalVisible}
         item={editItem}
@@ -254,6 +266,16 @@ const CategoryDetails = ({ navigation, route }) => {
         }}
       />
 
+      <EditAddMenuiIemModal
+    visible={addModalVisible}
+    shopId={shopId}
+     selectedCategoryId={catId} // Ye wahi _id hai jo aapne batayi
+     onClose={() => {
+    setAddModalVisible(false);
+    fetchItems(); 
+  }}
+/>
+
       <EditCtegoryModal
         visible={catmodalVisible}
         category={categoryInfo}
@@ -263,6 +285,7 @@ const CategoryDetails = ({ navigation, route }) => {
           getCategory()
         }}
       />
+
     </View>
   );
 };
@@ -283,6 +306,16 @@ const styles = StyleSheet.create({
   },
   backButtonContainer: { padding: wp(1) },
   backIcon: { width: wp(6), height: wp(6) },
+  bottomButtonContainer: {
+    position: 'absolute', // Isse button fix ho jayega
+    bottom: 63,
+    left: 0,
+    right: 0,
+    paddingVertical: hp(1),
+    backgroundColor: COLORS.white,
+    // borderTopWidth: 1,
+    // borderTopColor: '#f0f0f0',
+  },
   headerTitle: {
     fontSize: wp(4.5),
     color: COLORS.BlackText,
@@ -370,7 +403,8 @@ const styles = StyleSheet.create({
   },
 
   listContainer: {
-    paddingBottom: hp(5),
+   paddingBottom: hp(18), 
+    paddingHorizontal: wp(1),
   },
   menuItemCard: {
     flexDirection: 'row',
@@ -410,12 +444,12 @@ const styles = StyleSheet.create({
     fontSize: wp(3.5),
     color: '#666',
     fontFamily: FONTS.InterMedium,
-    textDecorationLine: 'line-through',
   },
   offerpriceText: {
     fontSize: wp(3.5),
     color: '#666',
     fontFamily: FONTS.InterMedium,
+    textDecorationLine: 'line-through',
   },
   dotSeparator: {
     width: 4,

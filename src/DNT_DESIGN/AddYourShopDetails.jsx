@@ -19,6 +19,7 @@ import { apiPost } from '../Api/Api';
 import { useAppContext } from '../Context/AppContext';
 const AddYourShopDetails = ({ navigation, route }) => {
   const params = route.params;
+
  const { addressLine1, setAddressLine1 } = useAppContext();
   const [shopLogo, setShopLogo] = useState(null);
   const [shopImages, setShopImages] = useState([]);
@@ -26,7 +27,21 @@ const AddYourShopDetails = ({ navigation, route }) => {
   const [imaglimit,setimagelimmit] =useState(5);
   const [formupdate,setformupdate] =useState(false);
   const [uploadshop,setuploadShop] =useState(false)
+  const [loading,setisloading] = useState(false)
 
+
+ const getParsedAddress = () => {
+  try {
+    if (typeof params?.shopAddress === 'string') {
+      return JSON.parse(params.shopAddress);
+    }
+    return params?.shopAddress || {};
+  } catch (e) {
+    return {};
+  }
+};
+
+const addressData = getParsedAddress();
 
   const pickLogo = async () => {
     const result = await launchImageLibrary({ mediaType: 'photo' });
@@ -94,6 +109,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
           })
   
       // console.log(formData,"formdataa")
+      setisloading(true)
     
           const result = await apiPost(
             "/vendor/shop/create",
@@ -106,6 +122,8 @@ const AddYourShopDetails = ({ navigation, route }) => {
           if(!result.success){
             seterrormessage(result.message)
             setformupdate(false)
+            setisloading(false)
+             
           }
           if(result?.message == "Shop created successfully"){
   navigation.navigate(NavigationStrings.DNT_SuccesFull)
@@ -122,6 +140,8 @@ const AddYourShopDetails = ({ navigation, route }) => {
           console.log(error, "Error in submit shop")
           Alert.alert(error?.message)
           setformupdate(false)
+          setisloading(false)
+
         }
       }
 
@@ -163,7 +183,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
               style={styles.icon}
               resizeMode="contain"
             />
-            <Text style={styles.infoText}>{params?.shopAddress}</Text>
+            <Text style={styles.infoText}>{addressData?.addressLine}</Text>
 
             <Image
               source={require('../assets/images/rightCheck.png')}
@@ -230,6 +250,7 @@ const AddYourShopDetails = ({ navigation, route }) => {
         <FullwidthButton
           title="Submit"
           formupdate={formupdate}
+          isloading={loading}
           onPress={() => {
             submitShop()
           }}

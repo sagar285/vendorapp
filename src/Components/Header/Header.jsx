@@ -1,10 +1,10 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View,TouchableOpacity } from "react-native";
 import React from "react";
 import { COLORS } from "../../Theme/Colors";
 import { useAppContext } from "../../Context/AppContext";
 import { wp, hp } from "../../Theme/Dimensions";
 
-const Header = () => {
+const Header = ({onBackPress}) => {
   const { ActiveLoader } = useAppContext();
 
   return (
@@ -12,10 +12,15 @@ const Header = () => {
 
       {/* LEFT → Back + Title */}
       <View style={styles.leftRow}>
-        <Image
-          source={require("../../assets/images/backArrow.png")}
-          style={styles.backIcon}
-        />
+       <TouchableOpacity
+          onPress={onBackPress}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require("../../assets/images/backArrow.png")}
+            style={styles.backIcon}
+          />
+        </TouchableOpacity>
         <Text style={styles.title}>Register</Text>
       </View>
 

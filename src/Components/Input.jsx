@@ -21,7 +21,9 @@ const Input = ({
   onChangeText,
   secureTextEntry = false,
   maxLength,
-  keyboardType
+  keyboardType,
+  multiline = false,   
+  numberOfLines = 1
 }) => {
   const [hidePassword, setHidePassword] = useState(secureTextEntry);
 
@@ -31,9 +33,9 @@ const Input = ({
       <Text style={styles.label}>{label}</Text>
 
       {/* INPUT BOX */}
-      <View style={styles.inputWrapper}>
+      <View style={[styles.inputWrapper,multiline && { height: 'auto', minHeight: hp(10), alignItems: 'flex-start', paddingVertical: hp(1) }]}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, multiline && { textAlignVertical: 'top' }]}
           placeholder={placeholder}
           placeholderTextColor={COLORS.placeHolderGray}
           value={value}
@@ -41,6 +43,8 @@ const Input = ({
           onChangeText={onChangeText}
           secureTextEntry={hidePassword}
           keyboardType={keyboardType}
+          multiline={multiline}         
+    numberOfLines={numberOfLines}
         />
 
         {/* 👁 EYE ICON ONLY IF PASSWORD */}

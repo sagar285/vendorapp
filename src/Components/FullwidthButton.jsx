@@ -8,23 +8,29 @@ const FullwidthButton = ({ title, onPress, borderOnly = false,isloading,formupda
     return (
       <TouchableOpacity
         onPress={onPress}
-        disabled={formupdate ? true :false}
+      disabled={isloading || formupdate}
         activeOpacity={ formupdate ? 0.1 :0.7}
+       
         style={[
           styles.button,
           borderOnly && styles.borderButton, // border only style
-          {backgroundColor: formupdate ? COLORS.orange10 : COLORS.orange },
+         { backgroundColor: (formupdate || isloading) ? COLORS.orange : COLORS.orange },
         ]}
       >
-        <Text
-          style={[
-            styles.text,
-            borderOnly && styles.borderText,
-          ]}
-        >
-          
-          {title}
-        </Text>
+       {isloading ? (
+          // Jab loading ho raha ho tab ActivityIndicator dikhega
+          <ActivityIndicator color={borderOnly ? COLORS.orange : COLORS.white} />
+        ) : (
+          // Normal state mein button ka text dikhega
+          <Text
+            style={[
+              styles.text,
+              borderOnly && styles.borderText,
+            ]}
+          >
+            {title}
+          </Text>
+        )}
       </TouchableOpacity>
     );
   };

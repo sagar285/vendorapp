@@ -19,12 +19,53 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { apiPost, apiPut, BACKEND_URL } from '../Api/Api';
 
 const EditCategoryModal = ({ visible, onClose, category }) => {
-  const slideAnim = useRef(new Animated.Value(600)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(null);
   const [loading, setLoading] = useState(false);
+  const slideAnim = useRef(new Animated.Value(600)).current;
+const translateY = useRef(new Animated.Value(0)).current;
+const lastGestureDy = useRef(0);
+
+// PanResponder Logic
+const panResponder = useRef(
+  PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 5,
+    onPanResponderGrant: () => {
+      translateY.setOffset(lastGestureDy.current);
+      translateY.setValue(0);
+    },
+    onPanResponderMove: (_, gestureState) => {
+      if (gestureState.dy > 0) { // Sirf niche swipe allow karega
+        translateY.setValue(gestureState.dy);
+      }
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      const shouldClose = gestureState.dy > 150 || gestureState.vy > 0.5;
+      if (shouldClose) {
+        Animated.timing(translateY, {
+          toValue: 600,
+          duration: 250,
+          useNativeDriver: true,
+        }).start(() => {
+          onClose(); // Parent ko close signal dena
+          setTimeout(() => {
+            translateY.setValue(0);
+            lastGestureDy.current = 0;
+          }, 100);
+        });
+      } else {
+        translateY.flattenOffset();
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 8,
+        }).start();
+      }
+    },
+  })
+).current;
 
   /* PREFILL */
   useEffect(() => {
@@ -82,32 +123,57 @@ const EditCategoryModal = ({ visible, onClose, category }) => {
   };
 
   return (
-    <Modal transparent visible={visible} animationType="none">
-      <TouchableOpacity style={styles.overlay} onPress={() => onClose()} />
+   <Modal 
+      transparent 
+      visible={visible} 
+      animationType="none" 
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity 
+        style={styles.overlay} 
+        activeOpacity={1} 
+        onPress={onClose} 
+      />
 
       <Animated.View
-        style={[styles.modal, { transform: [{ translateY: slideAnim }] }]}
+        style={[
+          styles.modal,
+          {
+            transform: [
+              { translateY: slideAnim },
+              { translateY: translateY }
+            ]
+          },
+        ]}
       >
-        <View style={styles.dragHandle} />
+        <View 
+          {...panResponder.panHandlers} 
+          style={{ paddingVertical: hp(1.5), alignItems: 'center', width: '100%' }}
+        >
+          <View style={styles.dragHandle} />
+        </View>
 
-        <Input
-          label="Category Name*"
-          value={name}
-          onChangeText={setName}
-        />
+        <View style={{ paddingHorizontal: wp(1) }}>
+          <Input
+            label="Category Name*"
+            value={name}
+            onChangeText={setName}
+          />
 
-        <Text style={styles.uploadText}>Category Icon</Text>
-        <UploadCard
-          image={icon}
-          onPress={pickIcon}
-          onRemove={() => setIcon(null)}
-          isArray={false}
-        />
+          <Text style={styles.uploadText}>Category Icon</Text>
+          <UploadCard
+            image={icon}
+            onPress={pickIcon}
+            onRemove={() => setIcon(null)}
+            isArray={false}
+          />
 
-        <FullwidthButton
-          title={loading ? 'Updating...' : 'Update Category'}
-          onPress={updateCategory}
-        />
+          <FullwidthButton
+            title={loading ? 'Updating...' : 'Update Category'}
+            onPress={updateCategory}
+            isloading={loading}
+          />
+        </View>
       </Animated.View>
     </Modal>
   );
