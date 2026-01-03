@@ -325,6 +325,7 @@ const onClose = () =>{
      <EditShopModal
         visible={editModalVisible}
         shopData={shopDetail}
+        ShopAllData={paramsshop}
         onClose={(refresh) => {
           setEditModalVisible(false);
           if (refresh) {

@@ -6,11 +6,14 @@ import { Text, TextInput } from 'react-native';
 import messaging from "@react-native-firebase/messaging";
 import notifee, { AndroidImportance } from "@notifee/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { apiGet } from "./src/Api/Api";
+import { useAppContext } from "./src/Context/AppContext";
 Text.defaultProps  = Text.defaultProps || {};
 Text.defaultProps.allowFontScaling = false;
 TextInput.defaultProps = TextInput.defaultProps || {};
 TextInput.defaultProps.allowFontScaling = false;
+
+
 
 /* 🔔 CREATE SINGLE ORDER CHANNEL */
 async function createOrderChannel() {
@@ -85,6 +88,41 @@ const handleKilledState = async () => {
   };
 
 const App = () => {
+      
+    
+  const getuserProfile = async () => {
+    try {
+       const result = await apiGet('/user/profile');
+    } catch (error) {
+      console.log(error.message)
+       if (
+      error?.status === 401 ||
+      error?.message === "Session expired. Logged in from another device."
+    ) {
+      Alert.alert(
+        "Session Expired",
+        "Your account was logged in from another device. Please login again.",
+        [
+          {
+            text: "OK",
+            onPress: async () => {
+              await AsyncStorage.clear();
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+
+    }
+    };
+
+    useEffect(() => {
+      getuserProfile()
+    }, [getuserProfile])
+    
+  
+
   /* 🔐 PERMISSIONS */
   const requestPermissions = async () => {
     await notifee.requestPermission();

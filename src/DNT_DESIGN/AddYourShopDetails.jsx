@@ -19,7 +19,7 @@ import { apiPost } from '../Api/Api';
 import { useAppContext } from '../Context/AppContext';
 const AddYourShopDetails = ({ navigation, route }) => {
   const params = route.params;
-
+  console.log( params.shopAddress,"ye aayayyaayayayayayayaayayayayaaay")
  const { addressLine1, setAddressLine1 } = useAppContext();
   const [shopLogo, setShopLogo] = useState(null);
   const [shopImages, setShopImages] = useState([]);

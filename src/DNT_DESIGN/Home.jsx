@@ -87,7 +87,8 @@ const [tempQR, setTempQR] = useState(null);
     uploadAsyncFCMtoken();
   }, []); 
 
-  const getShops = async () => {
+  const getShops = useCallback(
+    async () => {
     try {
       setloadYourshop(true)
       const result = await apiGet('/vendor/shop/get');
@@ -103,13 +104,25 @@ const [tempQR, setTempQR] = useState(null);
         setloadYourshop(false)
       }
     }
-  };
+  },[
+  setloadYourshop,
+  setUserShops,
+  setFilteredShops,
+
+]
+  ) 
 
   console.log(userShops, 'kkkkk');
+ 
+  // useEffect(() => {
+  //   getShops();
+  // }, []);
 
-  useEffect(() => {
-    getShops();
-  }, []);
+  useFocusEffect(
+    useCallback(()=>{
+      getShops()
+    },[])
+  )
 
   const handleViewShop = shop => {
     console.log('View Shop:', shop);
