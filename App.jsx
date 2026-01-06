@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Platform, StyleSheet } from "react-native";
+import { Alert, Platform, StyleSheet } from "react-native";
 import Route from "./src/Navigations/RootNavigator";
 import { AppProvider } from "./src/Context/AppContext";
 import { Text, TextInput } from 'react-native';
@@ -27,6 +27,34 @@ async function createOrderChannel() {
     });
   }
 }
+
+
+     const getuserProfile = async () => {
+      try {
+         const result = await apiGet('/user/profile');
+         console.log(result,"waah result") 
+      } catch (error) {
+        console.log(error.message)
+         if (
+        error?.message === "Session expired. Logged in from another device."
+      ) {
+        Alert.alert(
+          "Session Expired",
+          "Your account was logged in from another device. Please login again.",
+          [
+            {
+              text: "OK",
+              // onPress:()=>onLogout() 
+            },
+          ],
+          { cancelable: false }  
+        ); 
+      }
+  
+      }
+      };
+      
+
 
 /* 🔔 SHOW NOTIFICATION */
 async function showOrderNotification(remoteMessage) {
@@ -89,44 +117,14 @@ const handleKilledState = async () => {
 
 const App = () => {
       
-    
-  const getuserProfile = async () => {
-    try {
-       const result = await apiGet('/user/profile');
-    } catch (error) {
-      console.log(error.message)
-       if (
-      error?.status === 401 ||
-      error?.message === "Session expired. Logged in from another device."
-    ) {
-      Alert.alert(
-        "Session Expired",
-        "Your account was logged in from another device. Please login again.",
-        [
-          {
-            text: "OK",
-            onPress: async () => {
-              await AsyncStorage.clear();
-            },
-          },
-        ],
-        { cancelable: false }
-      );
-    }
-
-    }
-    };
-
-    useEffect(() => {
-      getuserProfile()
-    }, [getuserProfile])
-    
   
-
+  useEffect(() => {
+    getuserProfile();
+  },[]); 
   /* 🔐 PERMISSIONS */
   const requestPermissions = async () => {
     await notifee.requestPermission();
-    await messaging().requestPermission();
+    await messaging().requestPermission(); 
   };
 
   /* 🔑 GET FCM TOKEN */

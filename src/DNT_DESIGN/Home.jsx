@@ -33,13 +33,13 @@ const Home = () => {
   const [userShops, setUserShops] = useState([]); // original data
   const [filteredShops, setFilteredShops] = useState([]); // searched result
   const [loadYourShop,setloadYourshop] =useState(false)
-  const {user} =useAppContext()
+  const {user,onLogout} =useAppContext()
 
   const [loadingQR, setLoadingQR] = useState(false);
   const [qrImageBase64, setQrImageBase64] = useState(null);
   const viewShotRef = useRef();
 const [tempShopData, setTempShopData] = useState(null);
-const [tempQR, setTempQR] = useState(null);
+const [tempQR, setTempQR] = useState(null); 
  
    useFocusEffect(
       useCallback(() => {
@@ -80,6 +80,9 @@ const [tempQR, setTempQR] = useState(null);
       }
     } catch (error) {
       console.log(error, 'error in token');
+      if(error.message == "Session expired. Logged in from another device."){
+        // onLogout()
+      }
     }
   };
 
@@ -96,9 +99,13 @@ const [tempQR, setTempQR] = useState(null);
       if (result.message === 'user shop get succed') {
         setUserShops(result.data);
         setFilteredShops(result.data);
-        setloadYourshop(false)
+        setloadYourshop(false);
       }
     } catch (error) {
+      console.log(error,"errrrr")
+      if(error.message == "Session expired. Logged in from another device."){
+        // onLogout()
+      }
       if (error.message === 'Not have valid role') {
         setopenform(true);
         setloadYourshop(false)

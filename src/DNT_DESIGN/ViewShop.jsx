@@ -95,7 +95,7 @@ const [editModalVisible, setEditModalVisible] = useState(false);
       const formatted = formatShopDetails(result?.data);
       setShopDetail(formatted);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load shop details');
+      // Alert.alert('Error', 'Failed to load shop details');
     }
   };
 
@@ -107,7 +107,7 @@ const [editModalVisible, setEditModalVisible] = useState(false);
 
       if (!base64) {
         setLoadingQR(false);
-        Alert.alert('Error', 'Failed to generate QR code.');
+        // Alert.alert('Error', 'Failed to generate QR code.');
         return;
       }
 
@@ -117,7 +117,7 @@ const [editModalVisible, setEditModalVisible] = useState(false);
       setLoadingQR(false);
     } catch (error) {
       setLoadingQR(false);
-      Alert.alert('Error', 'Something went wrong.');
+      // Alert.alert('Error', 'Something went wrong.');
     }
   };
 

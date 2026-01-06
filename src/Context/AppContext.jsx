@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { apiGet } from "../Api/Api";
+import { Alert } from "react-native";
 
 const AppContext = createContext(null);
 
@@ -19,15 +21,56 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [ActiveLoader,setActiveLoader] =useState(0)
-   const [addressLine1, setAddressLine1] = useState('');
+  const [addressLine1, setAddressLine1] = useState('');
+
   // ✅ Jo bhi globally share karna ho yahin return karo
+
+  const onLogout = async () => {
+    await AsyncStorage.clear();
+    setUser(null);
+  };
+
+  //     const getuserProfile = async () => {
+  //     try {
+  //        const result = await apiGet('/user/profile');
+  //        console.log(result,"waah result") 
+  //     } catch (error) {
+  //       console.log(error.message)
+  //        if (
+  //       error?.message === "Session expired. Logged in from another device."
+  //     ) {
+  //       Alert.alert(
+  //         "Session Expired",
+  //         "Your account was logged in from another device. Please login again.",
+  //         [
+  //           {
+  //             text: "OK",
+  //             onPress:()=>onLogout() 
+  //           },
+  //         ],
+  //         { cancelable: false }  
+  //       ); 
+  //     }
+  
+  //     }
+  //     };
+  
+      
+  // useEffect(() => {
+  //   getuserProfile();
+  // });
+ 
+
+   
+
   const value = {
     user,
     setUser,
     isLoading,
     setIsLoading,
     ActiveLoader,setActiveLoader,
-    addressLine1, setAddressLine1
+    addressLine1, setAddressLine1,
+    onLogout
   };
 
   const checkUser = async () =>{
