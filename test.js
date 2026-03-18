@@ -1,50 +1,37 @@
-import { Share, Platform } from "react-native";
+var admin = require("firebase-admin");
 
-const onShareOrder = async (item) => {
+var serviceAccount = require("./ghartak-92ab5-firebase-adminsdk-fbsvc-d2cc73ccae.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
+
+
+
+const sendSingleNotification = async (token, title, body, data = {}) => {
   try {
-    if (!item) return;
-
-    const message = `
-🧾 Order Summary
-
-Customer: ${safeText(item.firstName)} ${safeText(item.lastName)}
-Phone: ${safeText(item.phone)}
-Shop: ${safeText(item?.shopId?.shopName)}
-
-Total: ₹${safeText(item.grandTotal)}
-Status: ${safeText(item.status)}
-
-Items:
-${Array.isArray(item.items) && item.items.length > 0
-  ? item.items
-      .map(
-        (i) =>
-          `• ${safeText(i.name)} x ${safeText(i.quantity)} = ₹${safeText(
-            i.total
-          )}`
-      )
-      .join("\n")
-  : "No items"}
-
-Order ID: ${safeText(item._id)}
-    `.trim();
-
-    if (!message) {
-      console.log("Empty share message");
+    if (!token) {
+      console.log("FCM token not found");
       return;
     }
 
-    await Share.share(
-      Platform.OS === "ios"
-        ? {
-            title: "Order Details",
-            message,
-          }
-        : {
-            message,
-          }
-    );
+    const message = {
+      token:token,
+      data: {
+       title:title,
+        body:body
+      }
+    };              
+
+    const response = await admin.messaging().send(message);
+    console.log("Notification sent:", response);
+
+    return response;
   } catch (error) {
-    console.log("Share Error:", error);
+    console.error("Error sending notification:", error.message);
   }
 };
+sendSingleNotification()
+module.exports = {sendSingleNotification};

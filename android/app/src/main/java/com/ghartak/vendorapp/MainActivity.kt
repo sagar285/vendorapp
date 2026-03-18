@@ -1,4 +1,4 @@
-package com.vendorapp
+package com.ghartak.vendorapp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

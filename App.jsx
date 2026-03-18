@@ -1,64 +1,47 @@
-import React, { useEffect } from "react";
-import { Alert, Platform, StyleSheet } from "react-native";
-import Route from "./src/Navigations/RootNavigator";
-import { AppProvider } from "./src/Context/AppContext";
-import { Text, TextInput } from 'react-native';
+import React, { useEffect, useRef } from "react";
+import { Alert, Platform, StyleSheet, Text, TextInput } from "react-native";
 import messaging from "@react-native-firebase/messaging";
 import notifee, { AndroidImportance } from "@notifee/react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NavigationContainer } from "@react-navigation/native";
+
+import Route from "./src/Navigations/RootNavigator";
+import { AppProvider } from "./src/Context/AppContext";
 import { apiGet } from "./src/Api/Api";
-import { useAppContext } from "./src/Context/AppContext";
-Text.defaultProps  = Text.defaultProps || {};
+import {
+  savePendingNavigation,
+  getPendingNavigation,
+  clearPendingNavigation,
+} from "./src/screen/PendingNavigation";
+
+Text.defaultProps = Text.defaultProps || {};
 Text.defaultProps.allowFontScaling = false;
 TextInput.defaultProps = TextInput.defaultProps || {};
 TextInput.defaultProps.allowFontScaling = false;
 
-
-
-/* 🔔 CREATE SINGLE ORDER CHANNEL */
+/* Android notification channel */
 async function createOrderChannel() {
   if (Platform.OS === "android") {
     await notifee.createChannel({
       id: "order_channel",
       name: "Order Notifications",
       importance: AndroidImportance.HIGH,
-      sound: "ringtone", // 🔊 android/app/src/main/res/raw/ringtone.mp3
+      sound: "ringtone",
       vibration: true,
     });
   }
 }
 
+/* Deduplication store */
+const shownMessageIds = new Set();
 
-     const getuserProfile = async () => {
-      try {
-         const result = await apiGet('/user/profile');
-         console.log(result,"waah result") 
-      } catch (error) {
-        console.log(error.message)
-         if (
-        error?.message === "Session expired. Logged in from another device."
-      ) {
-        Alert.alert(
-          "Session Expired",
-          "Your account was logged in from another device. Please login again.",
-          [
-            {
-              text: "OK",
-              // onPress:()=>onLogout() 
-            },
-          ],
-          { cancelable: false }  
-        ); 
-      }
-  
-      }
-      };
-      
+/* Single notification display */
+async function showNotificationOnce(remoteMessage) {
+  if (!remoteMessage?.messageId) return;
+  if (shownMessageIds.has(remoteMessage.messageId)) return;
 
+  shownMessageIds.add(remoteMessage.messageId);
 
-/* 🔔 SHOW NOTIFICATION */
-async function showOrderNotification(remoteMessage) {
-  console.log(remoteMessage,"notfication")
   const title =
     remoteMessage?.data?.title ||
     remoteMessage?.notification?.title ||
@@ -81,91 +64,71 @@ async function showOrderNotification(remoteMessage) {
   });
 }
 
-/* 🟣 BACKGROUND / KILLED HANDLER (OUTSIDE COMPONENT) */
-messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log("📩 Background message:", remoteMessage);
+/* Background and killed state handler */
+messaging().setBackgroundMessageHandler(async (remoteMessage) => {
   await createOrderChannel();
-  await showOrderNotification(remoteMessage);
-});
 
-notifee.onBackgroundEvent(async ({ type, detail }) => {
-  const { notification, pressAction } = detail;
-
-  if (type === EventType.PRESS) {
-    console.log('User pressed notification in killed state', notification);
-    // Yahan agar koi specific screen pe bhejna hai toh logic likh sakte hain
-    // note: navigation yahan direct kaam nahi karega, initialNotification ka wait karna hoga
-    await notifee.cancelNotification(notification.id);
+  // Only show notification for data-only payload
+  if (!remoteMessage.notification) {
+    await showNotificationOnce(remoteMessage);
   }
 });
 
-const handleKilledState = async () => {
-    // 1. Firebase check
-    const initialNotification = await messaging().getInitialNotification();
-    if (initialNotification) {
-      console.log("📩 Opened from killed state (Firebase):", initialNotification);
-      // Navigation logic yahan aayega
-    }
-
-    // 2. Notifee check (Best for Android)
-    const initialNotifee = await notifee.getInitialNotification();
-    if (initialNotifee) {
-      console.log("📩 Opened from killed state (Notifee):", initialNotifee.notification);
-      // Navigation logic yahan aayega
-    }
-  };
-
 const App = () => {
-      
-  
+  const navigationRef = useRef(null);
+
+  /* Profile check */
   useEffect(() => {
-    getuserProfile();
-  },[]); 
-  /* 🔐 PERMISSIONS */
-  const requestPermissions = async () => {
-    await notifee.requestPermission();
-    await messaging().requestPermission(); 
-  };
+    const getUserProfile = async () => {
+      try {
+        await apiGet("/user/profile");
+      } catch (error) {
+        if (
+          error?.message ===
+          "Session expired. Logged in from another device."
+        ) {
+          Alert.alert(
+            "Session Expired",
+            "Your account was logged in from another device. Please login again.",
+            [{ text: "OK" }],
+            { cancelable: false }
+          );
+        }
+      }
+    };
 
-  /* 🔑 GET FCM TOKEN */
-  const getFcmToken = async () => {
-    const token = await messaging().getToken();
-    console.log("🔥 FCM TOKEN:", token);
-    await AsyncStorage.setItem("fcm_token", token);
-  };
+    getUserProfile();
+  }, []);
 
-  /* 🟢 FOREGROUND HANDLER */
-  const listenForeground = () => {
-    return messaging().onMessage(async remoteMessage => {
-      console.log("📩 Foreground message:", remoteMessage);
-      await showOrderNotification(remoteMessage);
-    });
-  };
-
-  /* ⚫ KILLED STATE TAP HANDLER */
-  const handleKilledState = async () => {
-    const initialNotification =
-      await messaging().getInitialNotification();
-
-    if (initialNotification) {
-      console.log(
-        "📩 Opened from killed state:",
-        initialNotification
-      );
-      // yahan navigation laga sakte ho
-    }
-  };
-
-  /* 🚀 INIT */
+  /* Init */
   useEffect(() => {
     let unsubscribe;
 
     const init = async () => {
-      await createOrderChannel();
-      await requestPermissions();
-      await getFcmToken();
-      unsubscribe = listenForeground();
-      await handleKilledState();
+      await notifee.requestPermission();
+      await messaging().requestPermission();
+      await createOrderChannel();      
+
+      const token = await messaging().getToken();
+      console.log(token,"fcm tokenn")
+    
+      await AsyncStorage.setItem("fcm_token", token);
+
+      // Foreground messages
+      unsubscribe = messaging().onMessage(async (remoteMessage) => {
+        await showNotificationOnce(remoteMessage);
+      });
+
+      // Killed state tap handling
+      const initialNotification =
+        await messaging().getInitialNotification();
+
+      if (initialNotification?.data?.screen) {
+        await savePendingNavigation({
+          name: initialNotification.data.screen,
+          params: initialNotification.data,
+        });
+      }
     };
 
     init();
@@ -177,7 +140,18 @@ const App = () => {
 
   return (
     <AppProvider>
-      <Route />
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={async () => {
+          const nav = await getPendingNavigation();
+          if (nav) {
+            navigationRef.current?.navigate(nav.name, nav.params);
+            await clearPendingNavigation();
+          }
+        }}
+      >
+        <Route />
+      </NavigationContainer>
     </AppProvider>
   );
 };

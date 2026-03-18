@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-export const BASE_URL = "http://3.108.53.177:9001/api";
-export const BACKEND_URL = "http://3.108.53.177:9001";
+export const BASE_URL = "http://72.62.241.56:9001/api";
+export const BACKEND_URL = "http://72.62.241.56:9001";
 // export const BASE_URL = "http://192.168.1.37:9001/api";
 // export const BACKEND_URL = "http://192.168.1.37:9001";
 // export const BASE_URL = "http://88.222.241.105:9001/api";
